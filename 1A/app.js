@@ -1,4 +1,4 @@
-
+#!/usr/bin/env node
 import { Command } from 'commander';
 import { addExpense } from './commands/add.js';
 import { listExpenses } from './commands/list.js';

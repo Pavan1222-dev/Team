@@ -1,19 +1,30 @@
-
 {
-  "name": "expense_tracker",
+  "name": "expense-tracker-cli-rishab",
   "version": "1.0.0",
-  "description": "CLI tool to manage expenses",
+  "description": "A command-line expense tracker with budgets and CSV export",
   "main": "app.js",
   "type": "module",
+  "bin": {
+    "expense-tracker": "./app.js"
+  },
   "scripts": {
     "start": "node app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint .",
+    "test": "node --test"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "expense-tracker",
+    "cli",
+    "budget"
+  ],
+  "author": "Rishab",
   "license": "ISC",
   "dependencies": {
     "commander": "^15.0.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "globals": "^17.13.0"
+  }
 }
