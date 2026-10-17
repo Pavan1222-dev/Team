@@ -2,9 +2,9 @@
   {
     "id": 1,
     "date": "2026-10-16",
-    "amount": 250,
+    "amount": 500,
     "category": "Food",
-    "description": "Lunch",
+    "description": "Lunch with friends",
     "paymentMode": "UPI"
   },
   {

@@ -2,6 +2,7 @@
 import { Command } from 'commander';
 import { addExpense } from './commands/add.js';
 import { listExpenses } from './commands/list.js';
+import { updateExpense } from './commands/update.js';
 
 const program = new Command();
 
@@ -37,7 +38,18 @@ program
     await listExpenses(options);
   });
 
-
+//update
+program.command('update')
+    .description('Update an existing expense')
+    .argument('<id>', 'ID of the expense to update')
+    .option('--date <date>', 'New expense date (YYYY-MM-DD)')
+    .option('--amount <amount>', 'New expense amount')
+    .option('--category <category>', 'New expense category')
+    .option('--description <description>', 'New expense description')
+    .option('--payment-mode <mode>', 'New payment mode')
+    .action(async (id, options) => {
+        await updateExpense(id, options);
+    });
 
 try { 
   await program.parseAsync(process.argv);
