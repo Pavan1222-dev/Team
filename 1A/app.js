@@ -6,6 +6,7 @@ import { updateExpense } from './commands/update.js';
 import { deleteExpense } from './commands/delete.js';
 import { showSummary } from './commands/summary.js';
 import { exportExpenses } from './commands/export.js';
+import { setBudget } from './commands/budget.js';
 
 const program = new Command();
 
@@ -78,6 +79,15 @@ program.command('export')
     .option('-o, --output <file>', 'Output CSV filename')
     .action(async (options) => {
         await exportExpenses(options);
+    });
+
+//get Budgets
+program.command('budget')
+    .description('Set a monthly budget for a category')
+    .argument('<category>', 'Expense category')
+    .argument('<amount>', 'Monthly budget amount')
+    .action(async (category, amount) => {
+        await setBudget(category, amount);
     });
 
 

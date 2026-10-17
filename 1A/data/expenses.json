@@ -1,13 +1,5 @@
 [
   {
-    "id": 1,
-    "date": "2026-10-16",
-    "amount": 500,
-    "category": "Food",
-    "description": "Lunch with friends",
-    "paymentMode": "UPI"
-  },
-  {
     "id": 1792213019379,
     "date": "2026-10-17",
     "amount": 250,
@@ -21,6 +13,30 @@
     "amount": 250,
     "category": "Food",
     "description": "Lunch",
+    "paymentMode": "UPI"
+  },
+  {
+    "id": 1792233599362,
+    "date": "2026-10-17",
+    "amount": 600,
+    "category": "Food",
+    "description": "Dinner",
+    "paymentMode": "UPI"
+  },
+  {
+    "id": 1792233718698,
+    "date": "2026-10-17",
+    "amount": 600,
+    "category": "Food",
+    "description": "Dinner",
+    "paymentMode": "UPI"
+  },
+  {
+    "id": 1792233762630,
+    "date": "2026-10-17",
+    "amount": 300,
+    "category": "Food",
+    "description": "Dinner",
     "paymentMode": "UPI"
   }
 ]
