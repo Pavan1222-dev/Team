@@ -4,6 +4,7 @@ import { addExpense } from './commands/add.js';
 import { listExpenses } from './commands/list.js';
 import { updateExpense } from './commands/update.js';
 import { deleteExpense } from './commands/delete.js';
+import { showSummary } from './commands/summary.js';
 
 const program = new Command();
 
@@ -57,6 +58,13 @@ program.command('delete')
     .argument('<id>', 'ID of the expense to delete')
     .action(async (id) => {
         await deleteExpense(id);
+    });
+
+//summary
+program.command('summary')
+    .description('Show expense totals by category and month')
+    .action(async () => {
+        await showSummary();
     });
 
 
