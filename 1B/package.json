@@ -1,0 +1,12 @@
+
+{
+  "name": "log-analyzer",
+  "version": "1.0.0",
+  "description": "Memory-efficient streaming web server log analyzer",
+  "type": "module",
+  "scripts": {
+    "start": "node app.js",
+    "generate": "node scripts/generate-logs.js",
+    "test": "node --test"
+  }
+}
