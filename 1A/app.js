@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import { addExpense } from './commands/add.js';
 import { listExpenses } from './commands/list.js';
 import { updateExpense } from './commands/update.js';
+import { deleteExpense } from './commands/delete.js';
 
 const program = new Command();
 
@@ -25,7 +26,6 @@ program
   });
 
 //list
-
 program
   .command('list')
   .description('List expenses with optional filters')
@@ -50,6 +50,15 @@ program.command('update')
     .action(async (id, options) => {
         await updateExpense(id, options);
     });
+
+//delete
+program.command('delete')
+    .description('Delete an existing expense')
+    .argument('<id>', 'ID of the expense to delete')
+    .action(async (id) => {
+        await deleteExpense(id);
+    });
+
 
 try { 
   await program.parseAsync(process.argv);
