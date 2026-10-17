@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "date": "2026-10-16",
+    "amount": 250,
+    "category": "Food",
+    "description": "Lunch",
+    "paymentMode": "UPI"
+  },
+  {
+    "id": 1792213019379,
+    "date": "2026-10-17",
+    "amount": 250,
+    "category": "Food",
+    "description": "Lunch",
+    "paymentMode": "UPI"
+  },
+  {
+    "id": 1792213425893,
+    "date": "2026-10-17",
+    "amount": 250,
+    "category": "Food",
+    "description": "Lunch",
+    "paymentMode": "UPI"
+  }
+]
