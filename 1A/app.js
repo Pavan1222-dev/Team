@@ -5,6 +5,7 @@ import { listExpenses } from './commands/list.js';
 import { updateExpense } from './commands/update.js';
 import { deleteExpense } from './commands/delete.js';
 import { showSummary } from './commands/summary.js';
+import { exportExpenses } from './commands/export.js';
 
 const program = new Command();
 
@@ -65,6 +66,18 @@ program.command('summary')
     .description('Show expense totals by category and month')
     .action(async () => {
         await showSummary();
+    });
+
+//export
+program.command('export')
+    .description('Export expenses to a CSV file')
+    .option('--from <date>', 'Start date (YYYY-MM-DD)')
+    .option('--to <date>', 'End date (YYYY-MM-DD)')
+    .option('--category <category>', 'Filter by category')
+    .option('--min-amount <amount>', 'Minimum expense amount')
+    .option('-o, --output <file>', 'Output CSV filename')
+    .action(async (options) => {
+        await exportExpenses(options);
     });
 
 
