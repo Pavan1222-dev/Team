@@ -42,4 +42,4 @@ erDiagram
     }
 ```
 
-The leave-approval rules that require balance and overlap checks are enforced by the future service layer in a transaction, as described in the project README.
+The leave-approval rules that require balance and overlap checks are enforced by `src/services/leave-service.js` in a transaction, as described in the project README. The schema preserves employee and reviewer references so leave history cannot be removed by deleting related employees.
