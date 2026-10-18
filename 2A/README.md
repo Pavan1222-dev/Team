@@ -1,6 +1,6 @@
 # Library Management API (Task 2A)
 
-Stage 1 provides the project foundation, SQLite schema, and health endpoint. Book, member, and loan operations are not implemented yet.
+The API provides book and member management endpoints. Loan operations are not implemented yet.
 
 ## Setup
 
@@ -37,9 +37,9 @@ npm run lint
 
 - `routes/` maps HTTP paths to controllers.
 - `controllers/` handles request and response details.
-- `services/` contains business rules; it will be added when operations are implemented.
-- `repositories/` contains database queries; it will be added alongside those services.
-- `validators/` contains request validation; Joi is installed for later stages.
+- `services/` contains business rules for books and members.
+- `repositories/` contains parameterized SQLite queries.
+- `validators/` contains Joi request validation.
 - `middleware/` handles unmatched routes and centralized errors.
 - `db/` opens SQLite and initializes the books, members, and loans schema.
 - `utils/` contains shared response formatting.
@@ -48,8 +48,9 @@ npm run lint
 
 The schema enforces required fields, unique ISBNs and member emails, valid copy counts, loan status/date consistency, and foreign-key references. These database constraints protect stored data even when later code paths change. Foreign-key enforcement is enabled explicitly for the connection.
 
-## Planned endpoints (not yet implemented)
+## Available endpoints
 
-- Books: create, list, view, update, and delete books.
+- Books: create, search/list, view, update, and delete books.
 - Members: create, list, view, update, and delete members.
-- Loans: borrow a book, return a book, and list loan records.
+
+Loan endpoints (borrow, return, and list loans) are not yet implemented.

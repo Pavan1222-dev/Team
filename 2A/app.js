@@ -3,6 +3,7 @@ import healthRoutes from './routes/health-routes.js';
 import { notFound } from './middleware/not-found.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { createBooksRouter } from './routes/books.routes.js';
+import { createMembersRouter } from './routes/members.routes.js';
 
 // Keeping app construction separate lets tests import the HTTP app without opening a port.
 export function createApp({ database } = {}) {
@@ -12,6 +13,7 @@ export function createApp({ database } = {}) {
   app.use(healthRoutes);
   if (database) {
     app.use('/api', createBooksRouter(database));
+    app.use('/api', createMembersRouter(database));
   }
   app.use(notFound);
   app.use(errorHandler);

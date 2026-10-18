@@ -16,6 +16,8 @@ export const schemaStatements = [
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL CHECK (length(trim(name)) > 0),
     email TEXT NOT NULL UNIQUE CHECK (length(trim(email)) > 0),
+    phone TEXT NOT NULL DEFAULT '',
+    membership_type TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
   `CREATE TABLE IF NOT EXISTS loans (
@@ -46,5 +48,14 @@ export async function initializeSchema(database) {
     await database.exec(
       "ALTER TABLE books ADD COLUMN category TEXT NOT NULL DEFAULT 'Uncategorized' CHECK (length(trim(category)) > 0)",
     );
+  }
+
+  // Older Stage 1 databases have members without the fields used by the Members API.
+  const memberColumns = await database.all('PRAGMA table_info(members)');
+  if (!memberColumns.some(({ name }) => name === 'phone')) {
+    await database.exec("ALTER TABLE members ADD COLUMN phone TEXT NOT NULL DEFAULT ''");
+  }
+  if (!memberColumns.some(({ name }) => name === 'membership_type')) {
+    await database.exec("ALTER TABLE members ADD COLUMN membership_type TEXT NOT NULL DEFAULT ''");
   }
 }
