@@ -1,0 +1,10 @@
+node_modules/
+exports/
+data/*.corrupt-*
+data/*.tmp
+*.csv
+!data/expenses.json
+!data/budgets.json
+.DS_Store
+.env
+*.env

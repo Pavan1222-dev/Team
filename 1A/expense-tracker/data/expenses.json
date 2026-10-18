@@ -1,0 +1,50 @@
+[
+  {
+    "id": "a1f2e3d4-0001-4000-8000-000000000001",
+    "date": "2025-01-05",
+    "amount": 250,
+    "category": "food",
+    "description": "Groceries",
+    "payment": "card"
+  },
+  {
+    "id": "b2c3d4e5-0002-4000-8000-000000000002",
+    "date": "2025-01-08",
+    "amount": 45,
+    "category": "transport",
+    "description": "Auto to office",
+    "payment": "upi"
+  },
+  {
+    "id": "c3d4e5f6-0003-4000-8000-000000000003",
+    "date": "2025-01-12",
+    "amount": 1200,
+    "category": "utilities",
+    "description": "Electricity bill",
+    "payment": "netbanking"
+  },
+  {
+    "id": "d4e5f6a7-0004-4000-8000-000000000004",
+    "date": "2025-01-18",
+    "amount": 320,
+    "category": "entertainment",
+    "description": "Movie + snacks",
+    "payment": "card"
+  },
+  {
+    "id": "e5f6a7b8-0005-4000-8000-000000000005",
+    "date": "2025-02-02",
+    "amount": 180,
+    "category": "food",
+    "description": "Team lunch",
+    "payment": "upi"
+  },
+  {
+    "id": "f6a7b8c9-0006-4000-8000-000000000006",
+    "date": "2025-02-10",
+    "amount": 60,
+    "category": "transport",
+    "description": "Cab home",
+    "payment": "card"
+  }
+]
