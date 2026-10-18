@@ -6,7 +6,7 @@ async function startServer() {
   // Do not accept requests until the schema is ready; fail startup clearly if it is not.
   const database = await createDatabase(config.databasePath);
 
-  const app = createApp();
+  const app = createApp({ database });
   const server = app.listen(config.port, () => {
     console.log(`Library API listening on port ${config.port}`);
   });
