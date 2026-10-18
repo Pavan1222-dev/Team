@@ -1,0 +1,26 @@
+{
+  "name": "library-management-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Stage 1 foundation for the library management REST API",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "joi": "^17.13.3",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.1",
+    "eslint": "^9.25.1",
+    "globals": "^16.0.0",
+    "supertest": "^7.1.0"
+  }
+}
