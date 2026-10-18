@@ -59,7 +59,7 @@ export function createWeatherProvider(options = {}) {
           precipitationProbability: daily.precipitation_probability_max?.[index] ?? null,
         })),
         units: {
-          temperature: body.current_units?.temperature_2m ?? '°C',
+          temperature: body.current_units?.temperature_2m ?? 'degrees Celsius',
           windSpeed: body.current_units?.wind_speed_10m ?? 'km/h',
           precipitation: body.current_units?.precipitation ?? 'mm',
         },

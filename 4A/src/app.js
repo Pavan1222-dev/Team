@@ -1,12 +1,15 @@
 import express from 'express';
 import pinoHttp from 'pino-http';
 import { logger } from './utils/logger.js';
+import { createCompareController } from './controllers/compare.controller.js';
 import { createCityController } from './controllers/city.controller.js';
 import { createCityRouter } from './routes/city.routes.js';
+import { createCompareService } from './services/compare.service.js';
 import { createCityService } from './services/city.service.js';
 
 export function createApp({ cityService = createCityService() } = {}) {
   const app = express();
+  const compareService = createCompareService(cityService);
   app.disable('x-powered-by');
   app.use(express.json({ limit: '32kb' }));
   app.use(pinoHttp({ logger }));
@@ -15,7 +18,7 @@ export function createApp({ cityService = createCityService() } = {}) {
     response.json({ status: 'ok' });
   });
 
-  app.use(createCityRouter(createCityController(cityService)));
+  app.use(createCityRouter(createCityController(cityService), createCompareController(compareService)));
 
   app.use((_request, response) => {
     response.status(404).json({ error: 'Route not found.' });
