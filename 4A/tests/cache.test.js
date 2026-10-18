@@ -55,6 +55,14 @@ test('city cache normalizes names, clones values, and expires at its TTL', () =>
 
   currentTime = 1_000;
   assert.equal(cache.get('sao paulo'), undefined);
+
+  currentTime = 0;
+  const tenMinuteCache = createCityCache({ now: () => currentTime });
+  tenMinuteCache.set('Pune', { city: { name: 'Pune' } });
+  currentTime = 10 * 60 * 1000 - 1;
+  assert.ok(tenMinuteCache.get('Pune'));
+  currentTime += 1;
+  assert.equal(tenMinuteCache.get('Pune'), undefined);
 });
 
 test('city endpoint returns MISS, HIT, and BYPASS and refresh replaces cached data', async (context) => {

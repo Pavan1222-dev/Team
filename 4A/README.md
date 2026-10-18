@@ -1,6 +1,6 @@
 # Weather and Currency Aggregator
 
-Node.js and Express service that combines city geocoding, weather, local time, and currency data from public providers. The health route, tested provider clients, city lookup, and city comparison endpoints are currently available; caching is added in a later stage.
+Node.js and Express service that combines city geocoding, weather, local time, and currency data from public providers. The health route, provider clients, city lookup, city comparison, and ten-minute in-memory caching are implemented.
 
 ## Requirements and setup
 
