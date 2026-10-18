@@ -1,4 +1,7 @@
 import express from 'express';
+import { createDepartmentsRouter } from './routes/departments.routes.js';
+import { createEmployeesRouter } from './routes/employees.routes.js';
+import { errorHandler, notFound } from './middleware/error-handler.js';
 
 export function createApp({ database } = {}) {
   const app = express();
@@ -27,18 +30,13 @@ export function createApp({ database } = {}) {
     }
   });
 
-  app.use((_request, response) => {
-    response.status(404).json({ error: 'Route not found.' });
-  });
+  if (database) {
+    app.use('/api/departments', createDepartmentsRouter(database));
+    app.use('/api/employees', createEmployeesRouter(database));
+  }
 
-  app.use((error, _request, response, _next) => {
-    const status = Number.isInteger(error.status) && error.status >= 400 && error.status < 600
-      ? error.status
-      : 500;
-    response.status(status).json({
-      error: status >= 500 ? (error.safeMessage ?? 'Internal server error.') : error.message,
-    });
-  });
+  app.use(notFound);
+  app.use(errorHandler);
 
   return app;
 }

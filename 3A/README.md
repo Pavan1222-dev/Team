@@ -1,6 +1,6 @@
 # Employee Management Service (Assignment 3A)
 
-This folder contains the initial foundation for the Employee Management REST API. Department, employee, and leave-request endpoints, business services, and seed data are not implemented yet.
+This folder contains the Employee Management REST API foundation and the department and employee CRUD APIs. Leave-request endpoints and reports are not implemented yet.
 
 ## Requirements
 
@@ -31,6 +31,72 @@ npm run dev
 ```
 
 `GET /health` returns `{ "status": "ok" }`. `GET /health/db` runs `SELECT current_database()` and returns the current database name when PostgreSQL is reachable. If it is unavailable, the endpoint returns HTTP 503 with a safe error message.
+
+## Department and employee API
+
+All API endpoints return JSON in the existing `{ "data": ... }` success shape. Errors use `{ "error": "..." }`. Delete operations return HTTP 204 with no body. List endpoints use `page` and `limit` (defaults: 1 and 10; maximum limit: 100) and return `items` with `pagination` metadata.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| POST | `/api/departments` | Create a department (`name`; optional `description`) |
+| GET | `/api/departments` | List departments; optional `name`, `page`, `limit`, `sortBy=name\|createdAt`, `order=asc\|desc` |
+| GET | `/api/departments/:id` | Retrieve a department |
+| PUT | `/api/departments/:id` | Partially update `name` and/or `description` |
+| DELETE | `/api/departments/:id` | Delete a department only when no employees belong to it |
+| POST | `/api/employees` | Create an employee with `firstName`, `lastName`, `email`, `departmentId`; optional `managerId`, `joiningDate` |
+| GET | `/api/employees` | List/search employees; optional `name`, `department`, `departmentId`, `joiningDateFrom`, `joiningDateTo`, `page`, `limit`, `sortBy`, `order` |
+| GET | `/api/employees/:id` | Retrieve an employee, including department name and manager ID |
+| PUT | `/api/employees/:id` | Partially update employee fields; IDs and leave balance are server-controlled |
+| DELETE | `/api/employees/:id` | Delete an employee unless preserved leave history references them |
+
+Employee name search matches first name, last name, or the combined name. Department search is a partial, case-insensitive match; `departmentId` is an exact filter. Joining-date range endpoints are inclusive. Employee sorting accepts `firstName`, `lastName`, `email`, `departmentName`, `joiningDate`, or `createdAt`. All query values are parameterized, and sort columns/directions are allowlisted.
+
+Example create request:
+
+```http
+POST /api/employees
+Content-Type: application/json
+
+{
+  "firstName": "Ada",
+  "lastName": "Lovelace",
+  "email": "ada@example.com",
+  "departmentId": 1,
+  "managerId": 2,
+  "joiningDate": "2024-03-01"
+}
+```
+
+Example create response (HTTP 201):
+
+```json
+{
+  "data": {
+    "id": "1",
+    "firstName": "Ada",
+    "lastName": "Lovelace",
+    "email": "ada@example.com",
+    "departmentId": "1",
+    "departmentName": "Research",
+    "managerId": "2",
+    "joiningDate": "2024-03-01",
+    "leaveBalanceDays": "20.00"
+  }
+}
+```
+
+Example paginated employee response:
+
+```json
+{
+  "data": {
+    "items": [],
+    "pagination": { "page": 1, "limit": 10, "totalItems": 0, "totalPages": 0 }
+  }
+}
+```
+
+Duplicate department names and employee emails return HTTP 409. Invalid inputs return HTTP 400; unknown IDs return HTTP 404. Department deletion with employees returns HTTP 409. Employee deletion preserves leave history and returns HTTP 409 when a leave request references the employee. Managers and departments must exist; self-management is rejected.
 
 To check connectivity from the command line without starting the HTTP server:
 
@@ -68,23 +134,23 @@ Run the unit and migration-runner test suite with:
 npm test
 ```
 
-These tests exercise health responses, leave-service business rules with a transactional stub, and migration locking/rollback behavior with a fake pool. They do not connect to or change PostgreSQL data. Database integration tests are separate and require an explicitly configured test database:
+These tests exercise health responses, leave-service business rules with a transactional stub, and migration locking/rollback behavior with a fake pool. PostgreSQL integration tests cover leave-service behavior and department/employee APIs in an isolated temporary schema. They require an explicitly configured test database:
 
 ```sh
 npm run test:integration
 ```
 
-Set `TEST_DB_NAME` to a dedicated database name different from `DB_NAME`; integration tests create and remove only a uniquely named temporary schema inside that test database.
+Set `TEST_DB_NAME` to a dedicated database name different from `DB_NAME`; integration tests create and remove only a uniquely named temporary schema inside that test database. `TEST_DB_HOST`, `TEST_DB_PORT`, `TEST_DB_USER`, and `TEST_DB_PASSWORD` may override the normal `DB_*` connection settings.
 
 ## Project structure
 
 - `src/config/` contains PostgreSQL connection configuration and a CLI connection check.
 - `src/app.js` configures Express and exports the app for later tests.
 - `src/server.js` starts the listener and closes the HTTP server and pool on shutdown.
-- `src/routes/`, `controllers/`, `repositories/`, `validators/`, and `middleware/` are reserved for the public API layers. `src/services/leave-service.js` currently contains internal leave workflow operations.
+- `src/routes/`, `controllers/`, `repositories/`, `validators/`, and `middleware/` separate the department and employee API layers. `src/services/leave-service.js` contains internal leave workflow operations.
 - `migrations/` contains schema changes; `scripts/migrate.js` applies them explicitly through the advisory-locked runner.
 - `seeds/` is reserved for later seed data; `tests/` contains health, service, migration-runner, and optional PostgreSQL integration coverage; `docs/` contains the ER diagram.
 
 ## Remaining assignment work
 
-The foundation, schema migrations, and internal transactional leave workflow service are in place. The remaining work includes department and employee CRUD, public leave request and review APIs, reports (including recursive hierarchy), employee search, seed data with at least 50 employees, and broader API-level tests.
+The foundation, schema migrations, department and employee CRUD, search, and internal transactional leave workflow service are in place. Remaining work includes public leave request and review APIs, reports (including recursive hierarchy), seed data with at least 50 employees, and broader API-level tests.
