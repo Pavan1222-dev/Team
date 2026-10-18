@@ -1,6 +1,6 @@
 # Employee Management Service (Assignment 3A)
 
-This folder contains the Employee Management REST API, including department and employee CRUD and public leave-request workflows. Reports are not implemented yet.
+This folder contains the Employee Management REST API, including department and employee CRUD, public leave-request workflows, reports, and optional fictional sample data.
 
 ## Requirements
 
@@ -53,6 +53,9 @@ All API endpoints return JSON in the existing `{ "data": ... }` success shape. E
 | GET | `/api/leave-requests/:id` | Retrieve a leave request |
 | PATCH | `/api/leave-requests/:id/approve` | Approve a pending request; body requires `reviewerId` |
 | PATCH | `/api/leave-requests/:id/reject` | Reject a pending request; body requires `reviewerId` |
+| GET | `/api/reports/department-headcount` | List every department and its employee count, including empty departments |
+| GET | `/api/reports/employees-on-leave-today` | List employees with approved leave covering PostgreSQL's current date |
+| GET | `/api/reports/employees/:id/hierarchy` | List an employee and successive managers up to the top-level manager |
 
 Employee name search matches first name, last name, or the combined name. Department search is a partial, case-insensitive match; `departmentId` is an exact filter. Joining-date range endpoints are inclusive. Employee sorting accepts `firstName`, `lastName`, `email`, `departmentName`, `joiningDate`, or `createdAt`. All query values are parameterized, and sort columns/directions are allowlisted.
 
@@ -86,6 +89,37 @@ Content-Type: application/json
 ```
 
 Successful review returns HTTP 200 with the request in `APPROVED` status and `remainingLeaveBalanceDays`. Rejection uses `PATCH /api/leave-requests/31/reject` with the same body and returns `REJECTED` without deducting leave balance. Errors use `{ "error": "..." }`; successes use `{ "data": ... }`.
+
+## Reports
+
+`GET /api/reports/department-headcount` returns a `{ "data": [...] }` array. A left join includes departments with no employees and reports their `employeeCount` as zero.
+
+```json
+{
+  "data": [
+    { "id": "1", "name": "Engineering", "description": null, "employeeCount": 12 },
+    { "id": "2", "name": "Product", "description": null, "employeeCount": 0 }
+  ]
+}
+```
+
+`GET /api/reports/employees-on-leave-today` returns employees with an `APPROVED` request whose inclusive date range contains PostgreSQL `CURRENT_DATE`. Pending and rejected requests are excluded. Employee, department, and leave date/reason details are returned. Migration `004_add_approved_leave_report_index.sql` adds a partial index for this lookup. On databases with migrations 001–003 applied, run `npm run migrate` once to add the index. Migrations are never run automatically.
+
+`GET /api/reports/employees/:id/hierarchy` requires a positive integer ID and returns HTTP 404 for an unknown employee. Its `data` array starts with the requested employee at `level: 0`, followed by the immediate manager and each next manager, ending at the top-level manager. The recursive query tracks visited IDs and stops before repeating an employee if malformed data contains a reporting cycle.
+
+```json
+{
+  "data": [
+    { "id": "15", "firstName": "Alex", "lastName": "Staff", "managerId": "9", "level": 0 },
+    { "id": "9", "firstName": "Jamie", "lastName": "Manager", "managerId": "2", "level": 1 },
+    { "id": "2", "firstName": "Robin", "lastName": "Root", "managerId": null, "level": 2 }
+  ]
+}
+```
+
+## Fictional sample data
+
+Run `npm run seed` after schema migrations are applied. The command uses the database selected by the existing `DB_*` environment settings. It inserts 60 fictional employees across five departments, with five top-level managers and non-cyclic manager relationships. Stable `seed.employee.NN@fictional.example` email addresses and `ON CONFLICT DO NOTHING` make repeated runs idempotent. The seed runs in one transaction and does not update or delete existing records. It reports how many employee rows were newly added; a repeat run normally reports zero. Tests call the seed function only with a temporary schema inside `employee_management_test`.
 
 Example create request:
 
@@ -152,14 +186,14 @@ npm run migrate
 
 The runner creates `schema_migrations`, reads `.sql` files in filename order, and applies each unapplied file in its own transaction. A PostgreSQL advisory lock serializes migration processes. A filename is recorded in the same transaction as its schema changes, so a failed file is rolled back and not marked applied. The lock is released and the pool is closed on success or failure. Already-recorded files are skipped. **Migrations are not run automatically by `npm start` or during setup.** Review the SQL and confirm the target database before running the command. The runner does not drop or reset existing data.
 
-The employee migration gives new employees a default leave balance of 20 days. No employees or other seed data are created by these migrations. The project’s later seed stage must add the required sample data, including at least 50 employees.
+The employee migration gives new employees a default leave balance of 20 days. Migrations do not create employee or other seed data. Migration 004 adds the partial index used by the employees-on-leave-today report.
 
 ## Initial schema and business rules
 
 - Departments have a unique name.
 - Employees reference a department with `ON DELETE RESTRICT`, so a department containing employees cannot be removed. Manager references point to another employee; deleting a manager sets that reference to null. An employee cannot be their own manager.
 - Leave requests use `PENDING`, `APPROVED`, or `REJECTED` status and cannot end before they start. Employee/reviewer references preserve request history.
-- `src/services/leave-service.js` provides reusable pending-request creation, approval, and rejection operations; public leave HTTP routes are not implemented yet. Reviews lock the request and employee rows in one transaction, verify that the reviewer is the employee's manager, and check available balance and inclusive date overlap before approval. Leave duration uses calendar days including both endpoints: `end_date - start_date + 1`. Approval status, reviewer data, and balance deduction commit together. Pending creation and rejection do not deduct balance. Failed operations roll back.
+- `src/services/leave-service.js` provides transactional pending-request creation, approval, and rejection operations. Reviews lock request and employee rows, verify the employee's manager, and check balance and inclusive date overlap before approval. Leave duration uses calendar days including both endpoints: `end_date - start_date + 1`. Approval status, reviewer data, and balance deduction commit together. Pending creation and rejection do not deduct balance. Failed operations roll back.
 - All future values in application SQL must be passed as query parameters.
 
 An ER diagram for this initial schema is in [`docs/er-diagram.md`](docs/er-diagram.md).
@@ -170,7 +204,7 @@ Run the unit and migration-runner test suite with:
 npm test
 ```
 
-These tests exercise health responses, leave-service business rules with a transactional stub, and migration locking/rollback behavior with a fake pool. PostgreSQL integration tests cover leave-service behavior and department/employee APIs in an isolated temporary schema. They require an explicitly configured test database:
+These tests exercise health responses, leave-service business rules with a transactional stub, report queries, and migration locking/rollback behavior with a fake pool. PostgreSQL integration tests cover leave-service behavior, department/employee APIs, leave-request APIs, reports, and repeated seeding in an isolated temporary schema. They require an explicitly configured test database:
 
 ```sh
 npm run test:integration
@@ -185,8 +219,8 @@ Set `TEST_DB_NAME` to a dedicated database name different from `DB_NAME`; integr
 - `src/server.js` starts the listener and closes the HTTP server and pool on shutdown.
 - `src/routes/`, `controllers/`, `repositories/`, `validators/`, and `middleware/` separate the API layers. `src/services/leave-service.js` owns transactional leave workflow rules; `src/services/leave-requests.service.js` composes them with the public read API.
 - `migrations/` contains schema changes; `scripts/migrate.js` applies them explicitly through the advisory-locked runner.
-- `seeds/` is reserved for later seed data; `tests/` contains health, service, migration-runner, and optional PostgreSQL integration coverage; `docs/` contains the ER diagram.
+- `seeds/` contains stable fictional sample data; `scripts/seed.js` inserts it transactionally; `tests/` contains health, service, reports, migration-runner, and optional PostgreSQL integration coverage; `docs/` contains the ER diagram.
 
 ## Remaining assignment work
 
-The foundation, schema migrations, department and employee CRUD, search, and transactional leave-request API are implemented. Remaining assignment work includes reports (including recursive hierarchy), seed data with at least 50 employees, and authentication before reviewer IDs can be trusted as caller identity.
+The foundation, migrations 001–003, department and employee CRUD/search, transactional leave-request API, reports, and 60-person fictional seed data are implemented. Migration 004 must still be applied manually to an existing database to add the optimized approved-leave report index. Authentication is still absent, so a request's `reviewerId` is checked against the employee's manager but is not tied to an authenticated caller identity.

@@ -5,9 +5,10 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "node --test tests/health.test.js tests/leave-service.test.js tests/leave-requests.test.js tests/migration-runner.test.js",
-    "test:integration": "node --test tests/leave-service.integration.test.js tests/departments-employees.integration.test.js tests/leave-requests.integration.test.js",
+    "test": "node --test tests/health.test.js tests/leave-service.test.js tests/leave-requests.test.js tests/reports.test.js tests/migration-runner.test.js",
+    "test:integration": "node --test tests/leave-service.integration.test.js tests/departments-employees.integration.test.js tests/leave-requests.integration.test.js tests/reports.integration.test.js",
     "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js",
     "db:check": "node src/config/test-db.js"
   },
   "keywords": ["employee-management", "express", "postgresql"],
