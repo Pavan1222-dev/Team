@@ -22,6 +22,7 @@ The service listens on port `3000` by default. Set `PORT` in `.env` to use anoth
 | GET | `/health` | Return `{ "status": "ok" }` |
 | GET | `/city/:name` | Return city, weather, local time, and currency details |
 | GET | `/compare?cities=Hyderabad,Pune,Bengaluru` | Return isolated results for up to five cities |
+| GET | `/compare?cities=Hyderabad,Pune,Bengaluru` | Return isolated results for up to five cities |
 
 ### City lookup
 
@@ -75,7 +76,7 @@ Weather, exchange-rate, and local-time retrieval are independent. If a secondary
 curl "http://localhost:3000/compare?cities=Hyderabad,Pune,Bengaluru"
 ```
 
-The `cities` query parameter is required, comma-separated, and accepts at most five distinct valid city names. Empty elements, duplicates (case and accent insensitive), or too many names return `400`. Results preserve the requested order and include `requestedCity`, `success`, `data`, and `error` for each entry. One city failing does not discard the rest:
+The `cities` query parameter is required, comma-separated, and accepts at most five distinct valid city names. Empty elements, duplicates (case and accent insensitive), or too many names return `400`. `refresh=true` bypasses cached data for every city. Results preserve the requested order and include `requestedCity`, `success`, `data`, and `error` for each entry. One city failing does not discard the rest:
 
 ```json
 {
@@ -87,6 +88,17 @@ The `cities` query parameter is required, comma-separated, and accepts at most f
 ```
 
 Comparisons run with at most two city lookups at a time, limiting outbound request bursts while retaining parallel work.
+
+### Cache behavior
+
+Successful and partial city responses are cached in memory for 10 minutes using a key normalized for case, accents, and surrounding/repeated whitespace. `GET /city/:name` and each city in `/compare` share the same cache. Responses include `X-Cache: MISS` when fresh provider lookups were needed, `X-Cache: HIT` when all requested results were served from cache, and `X-Cache: BYPASS` for `?refresh=true`. Refresh requests fetch fresh data and replace the cache entry. Not-found results and failed geocoding are not cached. The cache is process-local and is cleared when the server restarts.
+
+`refresh` accepts only `true` or `false`, case-insensitively. For example:
+
+```sh
+curl "http://localhost:3000/city/Pune?refresh=true"
+curl "http://localhost:3000/compare?cities=Pune,Hyderabad&refresh=true"
+```
 
 ## Provider clients
 
@@ -106,6 +118,9 @@ npm start
 npm run dev
 npm test
 npm run lint
+npm run benchmark:cache
 ```
 
 The application can be imported from `src/app.js` without starting a listener. `src/server.js` owns process startup. `src/services/city.service.js` resolves the city and runs independent weather, currency, and local-time work in parallel. `Promise.allSettled` keeps secondary failures from cancelling other results.
+
+`npm run benchmark:cache` measures 60 local HTTP responses using a stubbed cache-hit service; it does not call public providers. Results vary by machine and are intended to make the cached-response target easy to check.

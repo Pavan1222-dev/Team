@@ -50,22 +50,54 @@ test('GET /compare rejects missing, empty, duplicate, malformed, and excessive i
     const response = await fetch(`${baseUrl}/compare${query}`);
     assert.equal(response.status, 400, `Expected 400 for ${query || 'missing cities'}`);
   }
+  const invalidRefresh = await fetch(`${baseUrl}/compare?cities=Pune&refresh=yes`);
+  assert.equal(invalidRefresh.status, 400);
+});
+
+test('comparison endpoint reuses the city cache and supports refresh', async (context) => {
+  let geocodingCalls = 0;
+  const service = cityServiceWithOneMissingCity();
+  const baseUrl = await withServer(context, {
+    ...service,
+    async getCityWithCache(cityName, options) {
+      const result = await service.getCityWithCache(cityName, options);
+      if (result.cacheStatus !== 'HIT') geocodingCalls += 1;
+      return result;
+    },
+    async getCity(cityName) { return service.getCity(cityName); },
+  });
+  const query = '/compare?cities=Pune,Hyderabad';
+
+  const first = await fetch(`${baseUrl}${query}`);
+  assert.equal(first.headers.get('x-cache'), 'MISS');
+  await first.json();
+
+  const cached = await fetch(`${baseUrl}${query}`);
+  assert.equal(cached.headers.get('x-cache'), 'HIT');
+  await cached.json();
+  assert.equal(geocodingCalls, 2);
+
+  const refreshed = await fetch(`${baseUrl}${query}&refresh=true`);
+  assert.equal(refreshed.headers.get('x-cache'), 'BYPASS');
+  await refreshed.json();
+  assert.equal(geocodingCalls, 4);
 });
 
 test('comparison service limits concurrent lookups and preserves input order', async () => {
   let active = 0;
   let highestActive = 0;
   const service = createCompareService({
-    async getCity(cityName) {
+    async getCityWithCache(cityName) {
       active += 1;
       highestActive = Math.max(highestActive, active);
       await new Promise((resolve) => setTimeout(resolve, 5));
       active -= 1;
-      return { city: { name: cityName } };
+      return { data: { city: { name: cityName } }, cacheStatus: 'MISS' };
     },
   }, 2);
 
   const result = await service.compare(['A', 'B', 'C', 'D', 'E']);
   assert.equal(highestActive, 2);
   assert.deepEqual(result.results.map(({ requestedCity }) => requestedCity), ['A', 'B', 'C', 'D', 'E']);
+  assert.equal(result.cacheStatus, 'MISS');
 });

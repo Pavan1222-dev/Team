@@ -2,7 +2,9 @@ export function createCompareController(compareService) {
   return {
     async compareCities(request, response, next) {
       try {
-        response.json(await compareService.compare(request.cityNames));
+        const result = await compareService.compare(request.cityNames, { refresh: request.refresh });
+        response.set('X-Cache', result.cacheStatus);
+        response.json({ results: result.results });
       } catch (error) {
         next(error);
       }

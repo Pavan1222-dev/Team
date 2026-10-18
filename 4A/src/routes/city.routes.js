@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { validateCityName, validateCompareQuery } from '../validators/city.validator.js';
+import { validateCityName, validateCompareQuery, validateRefreshQuery } from '../validators/city.validator.js';
 
 export function createCityRouter(controller, compareController) {
   const router = Router();
   router.get('/compare', validateCompareQuery, compareController.compareCities);
-  router.get('/city/:name', validateCityName, controller.getCity);
+  router.get('/city/:name', validateCityName, validateRefreshQuery, controller.getCity);
   return router;
 }

@@ -17,6 +17,24 @@ export function validateCityName(request, response, next) {
   next();
 }
 
+function parseRefresh(request, response) {
+  const value = request.query.refresh;
+  if (value === undefined) {
+    request.refresh = false;
+    return true;
+  }
+  if (typeof value !== 'string' || !['true', 'false'].includes(value.toLocaleLowerCase('en'))) {
+    response.status(400).json({ error: 'Query parameter "refresh" must be true or false.' });
+    return false;
+  }
+  request.refresh = value.toLocaleLowerCase('en') === 'true';
+  return true;
+}
+
+export function validateRefreshQuery(request, response, next) {
+  if (parseRefresh(request, response)) next();
+}
+
 export function validateCompareQuery(request, response, next) {
   const rawCities = request.query.cities;
   const configuredLimit = Number(process.env.MAX_COMPARE_CITIES ?? 5);
@@ -47,5 +65,6 @@ export function validateCompareQuery(request, response, next) {
   }
 
   request.cityNames = cities;
+  if (!parseRefresh(request, response)) return;
   next();
 }
