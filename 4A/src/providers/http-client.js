@@ -43,7 +43,7 @@ export async function requestJson(provider, url, {
     try {
       const response = await fetchImpl(url, { signal: controller.signal });
       if (!response.ok) {
-        const retryable = response.status === 429 || response.status >= 500;
+        const retryable = response.status === 408 || response.status === 429 || response.status >= 500;
         throw new ProviderError(provider, `Provider returned HTTP ${response.status}.`, {
           statusCode: response.status,
           transient: retryable,

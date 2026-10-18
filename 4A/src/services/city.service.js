@@ -21,13 +21,17 @@ function cityDetails(location) {
   };
 }
 
-export function createCityService({
-  geocoding = createGeocodingProvider(),
-  weather = createWeatherProvider(),
-  currency = createCurrencyProvider(),
-  now = () => new Date(),
-  cache = createCityCache(),
-} = {}) {
+export function createCityService(options = {}) {
+  const providerOptions = {
+    timeoutMs: Number(process.env.REQUEST_TIMEOUT_MS ?? 3000),
+    retryDelayMs: Number(process.env.RETRY_DELAY_MS ?? 150),
+  };
+  const geocoding = options.geocoding ?? createGeocodingProvider(providerOptions);
+  const weather = options.weather ?? createWeatherProvider(providerOptions);
+  const currency = options.currency ?? createCurrencyProvider(providerOptions);
+  const now = options.now ?? (() => new Date());
+  const cache = options.cache ?? createCityCache();
+
   async function fetchCity(cityName) {
     let location;
     try {

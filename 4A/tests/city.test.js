@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { test } from 'node:test';
 import { createApp } from '../src/app.js';
+import { ProviderError } from '../src/providers/http-client.js';
 import { createCityService } from '../src/services/city.service.js';
 
 const location = {
@@ -90,6 +91,14 @@ test('unresolved city returns 404 and invalid names return 400', async (context)
 
   const invalid = await fetch(`${baseUrl}/city/%20%20`);
   assert.equal(invalid.status, 400);
+
+  const malformedJson = await fetch(`${baseUrl}/city/Pune`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: '{',
+  });
+  assert.equal(malformedJson.status, 400);
+  assert.deepEqual(await malformedJson.json(), { error: 'The request could not be parsed.' });
 });
 
 test('geocoding provider failure returns a sanitized gateway error', async (context) => {
@@ -99,6 +108,18 @@ test('geocoding provider failure returns a sanitized gateway error', async (cont
   assert.equal(response.status, 502);
   assert.equal(body.error, 'The city data service is temporarily unavailable.');
   assert.equal(JSON.stringify(body).includes('private upstream'), false);
+});
+
+test('a timed-out weather provider becomes a partial-response warning', async (context) => {
+  const timeout = new ProviderError('open-meteo-weather', 'The provider request timed out.', { transient: true });
+  const baseUrl = await withServer(context, serviceFor({ weatherError: timeout }));
+  const response = await fetch(`${baseUrl}/city/Pune`);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.currentWeather, null);
+  assert.ok(body.warnings.includes('Weather data is temporarily unavailable.'));
+  assert.equal(JSON.stringify(body).includes('timed out'), false);
 });
 
 test('city aggregation begins weather and currency retrieval independently', async () => {

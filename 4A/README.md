@@ -15,13 +15,23 @@ npm run dev
 
 The service listens on port `3000` by default. Set `PORT` in `.env` to use another port. The selected public APIs do not need provider keys.
 
+Configuration in `.env`:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `PORT` | `3000` | HTTP listen port |
+| `REQUEST_TIMEOUT_MS` | `3000` | Per-attempt provider timeout; implementation caps it at 3000 ms |
+| `RETRY_DELAY_MS` | `150` | Delay before retrying a transient provider failure |
+| `CACHE_TTL_MS` | `600000` | Cache lifetime in milliseconds (10 minutes) |
+| `MAX_COMPARE_CITIES` | `5` | Maximum comparison entries; hard-capped at five |
+| `LOG_LEVEL` | `info` | Pino log level |
+
 ## Current endpoint
 
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET | `/health` | Return `{ "status": "ok" }` |
 | GET | `/city/:name` | Return city, weather, local time, and currency details |
-| GET | `/compare?cities=Hyderabad,Pune,Bengaluru` | Return isolated results for up to five cities |
 | GET | `/compare?cities=Hyderabad,Pune,Bengaluru` | Return isolated results for up to five cities |
 
 ### City lookup
@@ -55,7 +65,9 @@ Example response (provider values vary):
     "observedAt": "2026-10-18T12:00"
   },
   "forecast": [
-    { "date": "2026-10-18", "code": 1, "description": "Mainly clear", "high": 31, "low": 23, "precipitationProbability": 10 }
+    { "date": "2026-10-18", "code": 1, "description": "Mainly clear", "high": 31, "low": 23, "precipitationProbability": 10 },
+    { "date": "2026-10-19", "code": 2, "description": "Partly cloudy", "high": 30, "low": 22, "precipitationProbability": 20 },
+    { "date": "2026-10-20", "code": 3, "description": "Overcast", "high": 28, "low": 21, "precipitationProbability": 30 }
   ],
   "weatherUnits": { "temperature": "degrees Celsius", "windSpeed": "km/h", "precipitation": "mm" },
   "localTime": { "date": "2026-10-18", "time": "17:30:00", "timeZone": "Asia/Kolkata" },
@@ -109,7 +121,9 @@ Provider modules are isolated under `src/providers/` and normalize upstream data
 - Frankfurter supplies currency exchange rates against INR and does not require an API key. Rates are based on daily reference data, not real-time trading prices. See [Frankfurter documentation](https://frankfurter.dev/).
 - `country-to-currency` maps the geocoded ISO country code to a currency. Local date and time are formatted with Node's `Intl` APIs using the geocoded IANA timezone.
 
-Each upstream attempt is capped at three seconds and transient failures are retried at most twice. The provider client logs each attempt and duration. Invalid client responses and malformed JSON are not retried. Caching is not implemented yet.
+When publishing or presenting results, attribute weather data to Open-Meteo (for example, “Weather data by Open-Meteo.com”) under its CC BY 4.0 terms. Frankfurter rates are daily reference rates, may be unavailable on weekends or holidays, and are not intended as live trading prices. Both providers are external dependencies and may rate-limit or be temporarily unavailable; partial responses communicate those failures through `warnings`.
+
+Each upstream attempt is capped at three seconds and transient failures (HTTP 408, 429, 5xx, network errors, and timeouts) are retried at most twice. Permanent client errors and malformed responses are not retried. The provider client logs each attempt and duration without logging URLs, credentials, or response bodies.
 
 ## Commands
 
@@ -123,4 +137,4 @@ npm run benchmark:cache
 
 The application can be imported from `src/app.js` without starting a listener. `src/server.js` owns process startup. `src/services/city.service.js` resolves the city and runs independent weather, currency, and local-time work in parallel. `Promise.allSettled` keeps secondary failures from cancelling other results.
 
-`npm run benchmark:cache` measures 60 local HTTP responses using a stubbed cache-hit service; it does not call public providers. Results vary by machine and are intended to make the cached-response target easy to check.
+`npm run benchmark:cache` measures 100 local HTTP responses after 10 warmups using the real in-memory cache and stubbed provider clients; it does not call public providers. Results vary by machine and are intended to make the cached-response target easy to check.

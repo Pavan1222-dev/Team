@@ -82,12 +82,41 @@ test('request client retries transient failures and does not retry permanent cli
   assert.equal(result, 5);
 
   attempts = 0;
+  await requestJson('test', 'https://provider.test/data', {
+    fetchImpl: async () => (++attempts === 1 ? jsonResponse({}, 408) : jsonResponse({ value: 6 })),
+    logger: quietLogger,
+    retryDelayMs: 0,
+  });
+  assert.equal(attempts, 2);
+
+  attempts = 0;
   await assert.rejects(requestJson('test', 'https://provider.test/data', {
     fetchImpl: async () => { attempts += 1; return jsonResponse({}, 404); },
     logger: quietLogger,
     retryDelayMs: 0,
   }), (error) => error instanceof ProviderError && error.transient === false);
   assert.equal(attempts, 1);
+});
+
+test('request client logs provider, duration, attempt, and result for each attempt', async () => {
+  const records = [];
+  let attempts = 0;
+  const result = await requestJson('test-provider', 'https://provider.test/data', {
+    fetchImpl: async () => (++attempts === 1 ? jsonResponse({}, 503) : jsonResponse({ ok: true })),
+    logger: {
+      info(fields) { records.push(fields); },
+      warn(fields) { records.push(fields); },
+    },
+    retryDelayMs: 0,
+  });
+
+  assert.deepEqual(result, { ok: true });
+  assert.equal(records.length, 2);
+  assert.deepEqual(records.map(({ attempt, success }) => [attempt, success]), [[1, false], [2, true]]);
+  for (const record of records) {
+    assert.equal(record.provider, 'test-provider');
+    assert.ok(Number.isFinite(record.durationMs));
+  }
 });
 
 test('request client retries malformed responses as a permanent provider failure only once', async () => {

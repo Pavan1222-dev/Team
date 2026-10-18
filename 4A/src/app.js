@@ -25,9 +25,13 @@ export function createApp({ cityService = createCityService() } = {}) {
   });
 
   app.use((error, _request, response, _next) => {
-    const statusCode = Number.isInteger(error.statusCode) ? error.statusCode : 500;
+    const statusCode = Number.isInteger(error.statusCode)
+      ? error.statusCode
+      : Number.isInteger(error.status) ? error.status : 500;
     if (statusCode >= 500) logger.error({ err: error }, 'Request failed');
-    const message = statusCode >= 500 ? 'The city data service is temporarily unavailable.' : error.message;
+    const message = statusCode >= 500
+      ? 'The city data service is temporarily unavailable.'
+      : statusCode === 400 ? 'The request could not be parsed.' : error.message;
     response.status(statusCode).json({ error: message });
   });
 
