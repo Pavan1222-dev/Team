@@ -1,8 +1,11 @@
 import express from 'express';
 import pinoHttp from 'pino-http';
 import { logger } from './utils/logger.js';
+import { createCityController } from './controllers/city.controller.js';
+import { createCityRouter } from './routes/city.routes.js';
+import { createCityService } from './services/city.service.js';
 
-export function createApp() {
+export function createApp({ cityService = createCityService() } = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '32kb' }));
@@ -12,13 +15,17 @@ export function createApp() {
     response.json({ status: 'ok' });
   });
 
+  app.use(createCityRouter(createCityController(cityService)));
+
   app.use((_request, response) => {
     response.status(404).json({ error: 'Route not found.' });
   });
 
   app.use((error, _request, response, _next) => {
-    logger.error({ err: error }, 'Request failed');
-    response.status(500).json({ error: 'Internal server error.' });
+    const statusCode = Number.isInteger(error.statusCode) ? error.statusCode : 500;
+    if (statusCode >= 500) logger.error({ err: error }, 'Request failed');
+    const message = statusCode >= 500 ? 'The city data service is temporarily unavailable.' : error.message;
+    response.status(statusCode).json({ error: message });
   });
 
   return app;
