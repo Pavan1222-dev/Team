@@ -15,5 +15,9 @@ export function createBooksService(repository) {
         throw error;
       }
     },
+
+    async listBooks(filters) {
+      return repository.list(filters);
+    },
   };
 }
