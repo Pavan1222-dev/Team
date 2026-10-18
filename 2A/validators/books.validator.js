@@ -19,6 +19,26 @@ const listBooksSchema = Joi.object({
   order: Joi.string().lowercase().valid('asc', 'desc').default('asc'),
 });
 
+const bookIdSchema = Joi.object({
+  id: Joi.number().integer().positive().required(),
+});
+
+const updateBookSchema = Joi.object({
+  title: Joi.string().trim().min(1),
+  author: Joi.string().trim().min(1),
+  isbn: Joi.string().trim().min(1),
+  category: Joi.string().trim().min(1),
+  totalCopies: Joi.number().integer().positive(),
+}).min(1);
+
+function sendValidationError(response, error) {
+  const details = error.details.map(({ path, message }) => ({
+    field: path.join('.'),
+    message,
+  }));
+  response.status(400).json(errorResponse('Request validation failed.', details));
+}
+
 export function validateCreateBook(request, response, next) {
   const { value, error } = createBookSchema.validate(request.body, {
     abortEarly: false,
@@ -26,11 +46,7 @@ export function validateCreateBook(request, response, next) {
   });
 
   if (error) {
-    const details = error.details.map(({ path, message }) => ({
-      field: path.join('.'),
-      message,
-    }));
-    response.status(400).json(errorResponse('Request validation failed.', details));
+    sendValidationError(response, error);
     return;
   }
 
@@ -45,14 +61,37 @@ export function validateListBooks(request, response, next) {
   });
 
   if (error) {
-    const details = error.details.map(({ path, message }) => ({
-      field: path.join('.'),
-      message,
-    }));
-    response.status(400).json(errorResponse('Request validation failed.', details));
+    sendValidationError(response, error);
     return;
   }
 
   request.validatedQuery = value;
+  next();
+}
+
+export function validateBookId(request, response, next) {
+  const { value, error } = bookIdSchema.validate(request.params, { convert: true });
+
+  if (error) {
+    sendValidationError(response, error);
+    return;
+  }
+
+  request.bookId = value.id;
+  next();
+}
+
+export function validateUpdateBook(request, response, next) {
+  const { value, error } = updateBookSchema.validate(request.body, {
+    abortEarly: false,
+    convert: true,
+  });
+
+  if (error) {
+    sendValidationError(response, error);
+    return;
+  }
+
+  request.body = value;
   next();
 }

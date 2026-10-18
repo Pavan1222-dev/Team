@@ -16,7 +16,7 @@ async function withIsolatedApp(run) {
   const database = await createDatabase(':memory:');
 
   try {
-    await run(request(createApp({ database })));
+    await run(request(createApp({ database })), database);
   } finally {
     await database.close();
   }
@@ -261,5 +261,194 @@ test('GET /api/books safely treats SQL wildcard and quote characters as search t
     assert.equal(response.status, 200);
     assert.deepEqual(response.body.data.books.map(({ id }) => id), [1]);
     assert.equal(response.body.data.pagination.totalItems, 1);
+  });
+});
+
+test('GET /api/books/:id returns a matching book', async () => {
+  await withIsolatedApp(async (client) => {
+    const created = await client.post('/api/books').send(validBook);
+    const response = await client.get(`/api/books/${created.body.data.id}`);
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(response.body.data, created.body.data);
+    assert.equal(response.body.success, true);
+    assert.equal(response.body.error, null);
+  });
+});
+
+test('GET /api/books/:id validates IDs and returns 404 for missing books', async () => {
+  await withIsolatedApp(async (client) => {
+    const invalidId = await client.get('/api/books/0');
+    const missingBook = await client.get('/api/books/999');
+
+    assert.equal(invalidId.status, 400);
+    assert.ok(invalidId.body.error.details.some(({ field }) => field === 'id'));
+    assert.equal(missingBook.status, 404);
+    assert.equal(missingBook.body.error.message, 'Book not found.');
+  });
+});
+
+test('PUT /api/books/:id updates supplied fields and trims text', async () => {
+  await withIsolatedApp(async (client) => {
+    const created = await client.post('/api/books').send(validBook);
+    const response = await client.put(`/api/books/${created.body.data.id}`).send({
+      title: '  Updated Title  ',
+      category: '  Reference  ',
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.title, 'Updated Title');
+    assert.equal(response.body.data.category, 'Reference');
+    assert.equal(response.body.data.author, 'Ursula K. Le Guin');
+    assert.equal(response.body.data.totalCopies, 3);
+    assert.equal(response.body.data.availableCopies, 3);
+  });
+});
+
+test('PUT /api/books/:id preserves the checked-out count when increasing total copies', async () => {
+  await withIsolatedApp(async (client, database) => {
+    const created = await client.post('/api/books').send({ ...validBook, totalCopies: 4 });
+    const bookId = created.body.data.id;
+    const member = await database.run(
+      'INSERT INTO members (name, email) VALUES (?, ?)',
+      'Test Member',
+      'member@example.test',
+    );
+    await database.run(
+      `INSERT INTO loans (book_id, member_id, loan_date, due_date, status)
+       VALUES (?, ?, date('now'), '2999-12-31', 'active')`,
+      bookId,
+      member.lastID,
+    );
+    await database.run('UPDATE books SET copies_available = 3 WHERE id = ?', bookId);
+
+    const increased = await client.put(`/api/books/${bookId}`).send({ totalCopies: 5 });
+
+    assert.equal(increased.status, 200);
+    assert.equal(increased.body.data.totalCopies, 5);
+    assert.equal(increased.body.data.availableCopies, 4);
+  });
+});
+
+test('PUT /api/books/:id rejects reductions below active loans and keeps inventory unchanged', async () => {
+  await withIsolatedApp(async (client, database) => {
+    const created = await client.post('/api/books').send({ ...validBook, totalCopies: 4 });
+    const bookId = created.body.data.id;
+    const member = await database.run(
+      'INSERT INTO members (name, email) VALUES (?, ?)',
+      'Loaned Member',
+      'loaned@example.test',
+    );
+    await database.run(
+      `INSERT INTO loans (book_id, member_id, loan_date, due_date, status)
+       VALUES (?, ?, date('now'), '2999-12-31', 'active')`,
+      bookId,
+      member.lastID,
+    );
+    await database.run(
+      `INSERT INTO loans (book_id, member_id, loan_date, due_date, status)
+       VALUES (?, ?, date('now'), '2999-12-31', 'active')`,
+      bookId,
+      member.lastID,
+    );
+    await database.run('UPDATE books SET copies_available = 2 WHERE id = ?', bookId);
+
+    const response = await client.put(`/api/books/${bookId}`).send({ totalCopies: 1 });
+    const unchanged = await client.get(`/api/books/${bookId}`);
+
+    assert.equal(response.status, 409);
+    assert.match(response.body.error.message, /copies currently checked out/);
+    assert.equal(unchanged.body.data.totalCopies, 4);
+    assert.equal(unchanged.body.data.availableCopies, 2);
+  });
+});
+
+test('PUT /api/books/:id validates supplied fields and rejects availableCopies', async () => {
+  await withIsolatedApp(async (client) => {
+    const created = await client.post('/api/books').send(validBook);
+    const emptyUpdate = await client.put(`/api/books/${created.body.data.id}`).send({});
+    const badCopies = await client.put(`/api/books/${created.body.data.id}`).send({ totalCopies: -1 });
+    const clientAvailability = await client.put(`/api/books/${created.body.data.id}`).send({
+      availableCopies: 100,
+    });
+
+    assert.equal(emptyUpdate.status, 400);
+    assert.equal(badCopies.status, 400);
+    assert.ok(badCopies.body.error.details.some(({ field }) => field === 'totalCopies'));
+    assert.equal(clientAvailability.status, 400);
+    assert.ok(clientAvailability.body.error.details.some(({ field }) => field === 'availableCopies'));
+  });
+});
+
+test('PUT /api/books/:id returns 404 for missing records and 409 for duplicate ISBN', async () => {
+  await withIsolatedApp(async (client) => {
+    const first = await client.post('/api/books').send(validBook);
+    const second = await client.post('/api/books').send(bookFixture(2));
+
+    const missing = await client.put('/api/books/999').send({ title: 'Missing' });
+    const duplicate = await client.put(`/api/books/${second.body.data.id}`).send({
+      isbn: first.body.data.isbn,
+    });
+
+    assert.equal(missing.status, 404);
+    assert.equal(duplicate.status, 409);
+    assert.equal(duplicate.body.error.message, 'A book with this ISBN already exists.');
+  });
+});
+
+test('PUT /api/books/:id validates the ID', async () => {
+  await withIsolatedApp(async (client) => {
+    const response = await client.put('/api/books/not-an-id').send({ title: 'Valid title' });
+
+    assert.equal(response.status, 400);
+    assert.ok(response.body.error.details.some(({ field }) => field === 'id'));
+  });
+});
+
+test('DELETE /api/books/:id returns an empty 204 response when deletion succeeds', async () => {
+  await withIsolatedApp(async (client) => {
+    const created = await client.post('/api/books').send(validBook);
+    const response = await client.delete(`/api/books/${created.body.data.id}`);
+
+    assert.equal(response.status, 204);
+    assert.equal(response.text, '');
+  });
+});
+
+test('DELETE /api/books/:id validates IDs and returns 404 for missing books', async () => {
+  await withIsolatedApp(async (client) => {
+    const invalidId = await client.delete('/api/books/-2');
+    const missingBook = await client.delete('/api/books/999');
+
+    assert.equal(invalidId.status, 400);
+    assert.ok(invalidId.body.error.details.some(({ field }) => field === 'id'));
+    assert.equal(missingBook.status, 404);
+    assert.equal(missingBook.body.error.message, 'Book not found.');
+  });
+});
+
+test('DELETE /api/books/:id returns 409 and preserves loan history', async () => {
+  await withIsolatedApp(async (client, database) => {
+    const created = await client.post('/api/books').send(validBook);
+    const member = await database.run(
+      'INSERT INTO members (name, email) VALUES (?, ?)',
+      'History Member',
+      'history@example.test',
+    );
+    await database.run(
+      `INSERT INTO loans (book_id, member_id, loan_date, due_date, return_date, status)
+       VALUES (?, ?, date('now'), '2999-12-31', date('now'), 'returned')`,
+      created.body.data.id,
+      member.lastID,
+    );
+
+    const response = await client.delete(`/api/books/${created.body.data.id}`);
+    const stillExists = await client.get(`/api/books/${created.body.data.id}`);
+    const loans = await database.all('SELECT id FROM loans WHERE book_id = ?', created.body.data.id);
+
+    assert.equal(response.status, 409);
+    assert.match(response.body.error.message, /loan records reference it/);
+    assert.equal(stillExists.status, 200);
+    assert.equal(loans.length, 1);
   });
 });
