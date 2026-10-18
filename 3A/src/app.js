@@ -1,6 +1,7 @@
 import express from 'express';
 import { createDepartmentsRouter } from './routes/departments.routes.js';
 import { createEmployeesRouter } from './routes/employees.routes.js';
+import { createLeaveRequestsRouter } from './routes/leave-requests.routes.js';
 import { errorHandler, notFound } from './middleware/error-handler.js';
 
 export function createApp({ database } = {}) {
@@ -33,6 +34,9 @@ export function createApp({ database } = {}) {
   if (database) {
     app.use('/api/departments', createDepartmentsRouter(database));
     app.use('/api/employees', createEmployeesRouter(database));
+    if (typeof database.connect === 'function') {
+      app.use('/api/leave-requests', createLeaveRequestsRouter(database));
+    }
   }
 
   app.use(notFound);

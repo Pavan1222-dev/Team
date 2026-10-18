@@ -126,6 +126,13 @@ async function lockEmployeeAndAuthorize(client, employeeId, reviewerId) {
   if (!employee) {
     throw new LeaveServiceError('Employee not found.', 404);
   }
+  const reviewerResult = await client.query(
+    'SELECT id FROM employees WHERE id = $1 FOR KEY SHARE',
+    [reviewerId],
+  );
+  if (reviewerResult.rowCount === 0) {
+    throw new LeaveServiceError('Reviewer not found.', 404);
+  }
   if (String(employee.manager_id) !== String(reviewerId)) {
     throw new LeaveServiceError('Only the employee’s manager can review this leave request.', 403);
   }

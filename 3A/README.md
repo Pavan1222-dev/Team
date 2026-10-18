@@ -1,6 +1,6 @@
 # Employee Management Service (Assignment 3A)
 
-This folder contains the Employee Management REST API foundation and the department and employee CRUD APIs. Leave-request endpoints and reports are not implemented yet.
+This folder contains the Employee Management REST API, including department and employee CRUD and public leave-request workflows. Reports are not implemented yet.
 
 ## Requirements
 
@@ -48,8 +48,44 @@ All API endpoints return JSON in the existing `{ "data": ... }` success shape. E
 | GET | `/api/employees/:id` | Retrieve an employee, including department name and manager ID |
 | PUT | `/api/employees/:id` | Partially update employee fields; IDs and leave balance are server-controlled |
 | DELETE | `/api/employees/:id` | Delete an employee unless preserved leave history references them |
+| POST | `/api/leave-requests` | Submit a pending leave request (`employeeId`, `startDate`, `endDate`, `reason`) |
+| GET | `/api/leave-requests` | List requests; optional `employeeId`, `status`, `startDateFrom`, `startDateTo`, `page`, `limit`, `sortBy`, `order` |
+| GET | `/api/leave-requests/:id` | Retrieve a leave request |
+| PATCH | `/api/leave-requests/:id/approve` | Approve a pending request; body requires `reviewerId` |
+| PATCH | `/api/leave-requests/:id/reject` | Reject a pending request; body requires `reviewerId` |
 
 Employee name search matches first name, last name, or the combined name. Department search is a partial, case-insensitive match; `departmentId` is an exact filter. Joining-date range endpoints are inclusive. Employee sorting accepts `firstName`, `lastName`, `email`, `departmentName`, `joiningDate`, or `createdAt`. All query values are parameterized, and sort columns/directions are allowlisted.
+
+Leave request dates use `YYYY-MM-DD`; the end date must be on or after the start date. Duration is inclusive calendar days (`endDate - startDate + 1`). New requests are pending. Only the employee's manager may approve or reject a pending request. Approval locks the employee and request in a transaction, checks balance and inclusive overlap with approved leave, then changes the request and deducts balance atomically. Pending creation and rejection do not change balance. Repeated reviews, insufficient balance, and overlapping approved dates return HTTP 409. Invalid inputs return 400, missing employees/requests/reviewers return 404, and a reviewer who is not the manager receives 403. Leave list pagination defaults to page 1 and limit 10 (maximum 100); status accepts `PENDING`, `APPROVED`, or `REJECTED`.
+
+There is no authentication in this project. The reviewer supplies `reviewerId` in the JSON body, and the service verifies that this ID belongs to the employee's configured manager. Since the caller is not authenticated, the API cannot prove that the caller actually controls that manager account; this must not be treated as secure authorization in a deployed service.
+
+Submit a request:
+
+```http
+POST /api/leave-requests
+Content-Type: application/json
+
+{
+  "employeeId": 12,
+  "startDate": "2026-11-02",
+  "endDate": "2026-11-04",
+  "reason": "Annual leave"
+}
+```
+
+The API returns HTTP 201 with `{ "data": { "id": "31", "employeeId": "12", "startDate": "2026-11-02", "endDate": "2026-11-04", "durationDays": 3, "status": "PENDING" } }` (the object also includes reviewer and timestamp fields).
+
+Review a request as its manager:
+
+```http
+PATCH /api/leave-requests/31/approve
+Content-Type: application/json
+
+{ "reviewerId": 4 }
+```
+
+Successful review returns HTTP 200 with the request in `APPROVED` status and `remainingLeaveBalanceDays`. Rejection uses `PATCH /api/leave-requests/31/reject` with the same body and returns `REJECTED` without deducting leave balance. Errors use `{ "error": "..." }`; successes use `{ "data": ... }`.
 
 Example create request:
 
@@ -147,10 +183,10 @@ Set `TEST_DB_NAME` to a dedicated database name different from `DB_NAME`; integr
 - `src/config/` contains PostgreSQL connection configuration and a CLI connection check.
 - `src/app.js` configures Express and exports the app for later tests.
 - `src/server.js` starts the listener and closes the HTTP server and pool on shutdown.
-- `src/routes/`, `controllers/`, `repositories/`, `validators/`, and `middleware/` separate the department and employee API layers. `src/services/leave-service.js` contains internal leave workflow operations.
+- `src/routes/`, `controllers/`, `repositories/`, `validators/`, and `middleware/` separate the API layers. `src/services/leave-service.js` owns transactional leave workflow rules; `src/services/leave-requests.service.js` composes them with the public read API.
 - `migrations/` contains schema changes; `scripts/migrate.js` applies them explicitly through the advisory-locked runner.
 - `seeds/` is reserved for later seed data; `tests/` contains health, service, migration-runner, and optional PostgreSQL integration coverage; `docs/` contains the ER diagram.
 
 ## Remaining assignment work
 
-The foundation, schema migrations, department and employee CRUD, search, and internal transactional leave workflow service are in place. Remaining work includes public leave request and review APIs, reports (including recursive hierarchy), seed data with at least 50 employees, and broader API-level tests.
+The foundation, schema migrations, department and employee CRUD, search, and transactional leave-request API are implemented. Remaining assignment work includes reports (including recursive hierarchy), seed data with at least 50 employees, and authentication before reviewer IDs can be trusted as caller identity.
