@@ -1,0 +1,48 @@
+{
+  "info": {
+    "name": "Library Management API",
+    "description": "CRUD, search, pagination, loan rules, late fees, and failure cases for the Library Management API. Start the API before running. Requests save IDs for dependent steps. The overdue return request documents how to make a loan overdue in the JSON file.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [{ "key": "baseUrl", "value": "http://localhost:3000/api/v1" }, { "key": "bookId", "value": "" }, { "key": "memberId", "value": "" }, { "key": "loanId", "value": "" }, { "key": "loan2Id", "value": "" }, { "key": "loan3Id", "value": "" }, { "key": "loan4Id", "value": "" }],
+  "item": [
+    { "name": "Health", "request": { "method": "GET", "url": "{{baseUrl}}/health" } },
+    { "name": "Books", "item": [
+      { "name": "Create book (201)", "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) pm.collectionVariables.set('bookId', pm.response.json().data.id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"The Pragmatic Programmer\",\n  \"author\": \"Andrew Hunt\",\n  \"isbn\": \"9780135957059\",\n  \"category\": \"Technology\",\n  \"totalCopies\": 3\n}" }, "url": "{{baseUrl}}/books" } },
+      { "name": "Duplicate ISBN (409)", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Duplicate\", \"author\": \"Someone\", \"isbn\": \"9780135957059\", \"category\": \"Technology\", \"totalCopies\": 1\n}" }, "url": "{{baseUrl}}/books" } },
+      { "name": "Invalid book body (400 field errors)", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"\", \"author\": 5, \"isbn\": \"x\", \"category\": \"\", \"totalCopies\": 0\n}" }, "url": "{{baseUrl}}/books" } },
+      { "name": "Search, paginate and sort books", "request": { "method": "GET", "url": "{{baseUrl}}/books?title=pragmatic&page=1&limit=10&sortBy=title&order=asc" } },
+      { "name": "Invalid pagination (400)", "request": { "method": "GET", "url": "{{baseUrl}}/books?page=0&limit=abc" } },
+      { "name": "Get book (200)", "request": { "method": "GET", "url": "{{baseUrl}}/books/{{bookId}}" } },
+      { "name": "Missing book (404)", "request": { "method": "GET", "url": "{{baseUrl}}/books/00000000-0000-4000-8000-000000000000" } },
+      { "name": "Update book (200)", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"category\": \"Software Development\"\n}" }, "url": "{{baseUrl}}/books/{{bookId}}" } },
+      { "name": "Delete book with active loan (409)", "request": { "method": "DELETE", "url": "{{baseUrl}}/books/{{bookId}}" } }
+    ]},
+    { "name": "Members", "item": [
+      { "name": "Create member (201)", "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) pm.collectionVariables.set('memberId', pm.response.json().data.id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Asha Rao\",\n  \"email\": \"asha@example.com\",\n  \"phone\": \"+91 9876543210\",\n  \"membershipType\": \"standard\"\n}" }, "url": "{{baseUrl}}/members" } },
+      { "name": "Duplicate email (409)", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Another Asha\", \"email\": \"ASHA@example.com\", \"phone\": \"1234567890\", \"membershipType\": \"student\"\n}" }, "url": "{{baseUrl}}/members" } },
+      { "name": "Invalid member body (400 field errors)", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"\", \"email\": \"bad-email\", \"phone\": \"\", \"membershipType\": \"gold\"\n}" }, "url": "{{baseUrl}}/members" } },
+      { "name": "List members (pagination and sorting)", "request": { "method": "GET", "url": "{{baseUrl}}/members?page=1&limit=10&sortBy=name&order=asc" } },
+      { "name": "Get member (200)", "request": { "method": "GET", "url": "{{baseUrl}}/members/{{memberId}}" } },
+      { "name": "Update member (200)", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+91 9000000000\"\n}" }, "url": "{{baseUrl}}/members/{{memberId}}" } },
+      { "name": "Delete member with active loan (409)", "request": { "method": "DELETE", "url": "{{baseUrl}}/members/{{memberId}}" } }
+    ]},
+    { "name": "Loans", "item": [
+      { "name": "Issue loan 1 (201)", "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) pm.collectionVariables.set('loanId', pm.response.json().data.id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"bookId\": \"{{bookId}}\", \"memberId\": \"{{memberId}}\"\n}" }, "url": "{{baseUrl}}/loans" } },
+      { "name": "Issue loan 2 (201)", "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) pm.collectionVariables.set('loan2Id', pm.response.json().data.id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"bookId\": \"{{bookId}}\", \"memberId\": \"{{memberId}}\"\n}" }, "url": "{{baseUrl}}/loans" } },
+      { "name": "Issue loan 3 (201)", "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) pm.collectionVariables.set('loan3Id', pm.response.json().data.id);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"bookId\": \"{{bookId}}\", \"memberId\": \"{{memberId}}\"\n}" }, "url": "{{baseUrl}}/loans" } },
+      { "name": "Fourth active loan (409 limit)", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"bookId\": \"{{bookId}}\", \"memberId\": \"{{memberId}}\"\n}" }, "url": "{{baseUrl}}/loans" } },
+    { "name": "Issue with missing book (404)", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"bookId\": \"00000000-0000-4000-8000-000000000000\", \"memberId\": \"{{memberId}}\"\n}" }, "url": "{{baseUrl}}/loans" } },
+      { "name": "Issue with missing member (404)", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"bookId\": \"{{bookId}}\", \"memberId\": \"00000000-0000-4000-8000-000000000000\"\n}" }, "url": "{{baseUrl}}/loans" } },
+      { "name": "List overdue loans", "request": { "method": "GET", "url": "{{baseUrl}}/loans?overdue=true&page=1&limit=10&sortBy=dueAt&order=asc" } },
+      { "name": "List all loans", "request": { "method": "GET", "url": "{{baseUrl}}/loans?status=active&page=1&limit=10&sortBy=issuedAt&order=desc" } },
+      { "name": "Return active loan (200; late fee if overdue)", "request": { "method": "POST", "url": "{{baseUrl}}/loans/{{loanId}}/return" } },
+      { "name": "Return same loan again (409)", "request": { "method": "POST", "url": "{{baseUrl}}/loans/{{loanId}}/return" } },
+      { "name": "Return missing loan (404)", "request": { "method": "POST", "url": "{{baseUrl}}/loans/00000000-0000-4000-8000-000000000000/return" } }
+    ]},
+    { "name": "Cleanup", "item": [
+      { "name": "Delete returned book (204)", "request": { "method": "DELETE", "url": "{{baseUrl}}/books/{{bookId}}" } },
+      { "name": "Delete member with remaining active loans (409)", "request": { "method": "DELETE", "url": "{{baseUrl}}/members/{{memberId}}" } }
+    ]}
+  ]
+}
