@@ -16,7 +16,18 @@
 
     <p id="status">Connecting...</p>
     <p id="room-status">You haven't joined a room yet.</p>
+    
+    <form id="message-form">
+        <input
+            id="message-input"
+            type="text"
+            placeholder="Type a message..."
+            required
+        >
+        <button type="submit">Send</button>
+    </form>
 
+    <ul id="messages"></ul>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/chat.js"></script>
 </body>

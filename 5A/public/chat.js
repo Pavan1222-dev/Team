@@ -6,6 +6,10 @@ const usernameInput = document.getElementById("username");
 const roomInput = document.getElementById("room");
 const roomStatus = document.getElementById("room-status");
 
+const messageForm = document.getElementById("message-form");
+const messageInput = document.getElementById("message-input");
+const messages = document.getElementById("messages");
+
 socket.on("connect", () => {
     status.textContent = "Connected to chat server!";
     console.log("Connected:", socket.id);
@@ -16,6 +20,7 @@ socket.on("disconnect", () => {
     console.log("Disconnected from server");
 });
 
+//join form event listener
 joinForm.addEventListener("submit", (event) => {
     event.preventDefault();
 
@@ -30,4 +35,28 @@ joinForm.addEventListener("submit", (event) => {
         username: username,
         room: room
     });
+});
+
+//message form event listener
+messageForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const message = messageInput.value.trim();
+
+    if (message === "") {
+        return;
+    }
+
+    socket.emit("send-message", message);
+
+    messageInput.value = "";
+});
+
+//on receiving new message emit from server
+socket.on("new-message", (data) => {
+    const item = document.createElement("li");
+
+    item.textContent = `${data.username}: ${data.message}`;
+
+    messages.appendChild(item);
 });

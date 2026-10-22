@@ -18,16 +18,46 @@ app.use(express.static(path.join(__dirname, "public")));
 io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 
-    //join room listener
-     socket.on("join-room", (data) => {
-        const username = data.username;
-        const room = data.room;
+//join room listener
+    socket.on("join-room", (data) => {
+    const username = data.username.trim();
+    const room = data.room;
 
-        socket.join(room);
+    if (!username || !["general", "development"].includes(room)) {
+        return;
+    }
 
-        console.log(`${username} joined room: ${room}`);
+    socket.join(room);
+
+    
+    socket.data.username = username;
+    socket.data.room = room;
+
+    console.log(`${username} joined room: ${room}`);
     });
 
+
+//on receiving of send-message
+    socket.on("send-message", (message) => {
+    if (typeof message !== "string") {
+        return;
+    }
+
+    const username = socket.data.username;
+    const room = socket.data.room;
+    const cleanMessage = message.trim();
+
+    if (!username || !room || !cleanMessage) {
+        return;
+    }
+
+        io.to(room).emit("new-message", {
+            username: username,
+            message: cleanMessage
+        });
+    });
+
+    //on disconnet
     socket.on("disconnect", () => {
         console.log("User disconnected:", socket.id);
     });
