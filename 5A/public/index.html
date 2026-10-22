@@ -1,0 +1,22 @@
+<body>
+    <h1>Team Chat Application</h1>
+
+    <form id="join-form">
+        <label for="username">Display name:</label>
+        <input id="username" type="text" required>
+
+        <label for="room">Room:</label>
+        <select id="room">
+            <option value="general">General</option>
+            <option value="development">Development</option>
+        </select>
+
+        <button type="submit">Join Room</button>
+    </form>
+
+    <p id="status">Connecting...</p>
+    <p id="room-status">You haven't joined a room yet.</p>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/chat.js"></script>
+</body>
