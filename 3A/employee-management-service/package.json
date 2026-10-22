@@ -1,0 +1,15 @@
+{
+  "name": "employee-management-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PostgreSQL-backed employee, department, and leave management REST API.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js"
+  },
+  "dependencies": { "dotenv": "^16.4.7", "express": "^5.1.0", "pg": "^8.13.1" }
+}
