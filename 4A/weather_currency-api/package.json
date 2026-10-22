@@ -1,0 +1,13 @@
+{
+  "name": "city-weather-currency-aggregator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A learning project that combines city weather, local time, and currency data.",
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file=.env src/server.js",
+    "dev": "node --watch --env-file=.env src/server.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": { "express": "^5.1.0" }
+}
