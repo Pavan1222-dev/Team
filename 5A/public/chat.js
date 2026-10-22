@@ -10,6 +10,8 @@ const messageForm = document.getElementById("message-form");
 const messageInput = document.getElementById("message-input");
 const messages = document.getElementById("messages");
 
+const onlineUsersList = document.getElementById("online-users");
+
 socket.on("connect", () => {
     status.textContent = "Connected to chat server!";
     console.log("Connected:", socket.id);
@@ -59,4 +61,15 @@ socket.on("new-message", (data) => {
     item.textContent = `${data.username}: ${data.message}`;
 
     messages.appendChild(item);
+});
+
+//on recieving online users list
+socket.on("online-users", (users) => {
+    onlineUsersList.innerHTML = "";
+
+    users.forEach((username) => {
+        const item = document.createElement("li");
+        item.textContent = username;
+        onlineUsersList.appendChild(item);
+    });
 });

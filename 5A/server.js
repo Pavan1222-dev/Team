@@ -13,13 +13,16 @@ const PORT = 3000;
 
 // Serve frontend files from the public folder
 app.use(express.static(path.join(__dirname, "public")));
+//---------------------------//
+
 
 // Handle Socket.IO connections
 io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
+//----------------------------------//
 
 //join room listener
-    socket.on("join-room", (data) => {
+    socket.on("join-room", async (data) => {
     const username = data.username.trim();
     const room = data.room;
 
@@ -29,12 +32,20 @@ io.on("connection", (socket) => {
 
     socket.join(room);
 
-    
+    //fetching the sockets of a room
+    const socketsInRoom = await io.in(room).fetchSockets();
+    const onlineUsers = socketsInRoom.map((client) => {
+        return client.data.username;
+    });
+    io.to(room).emit("online-users", onlineUsers);
+    //-//
+
     socket.data.username = username;
     socket.data.room = room;
 
     console.log(`${username} joined room: ${room}`);
     });
+//-----------------------------------------------------------//
 
 
 //on receiving of send-message
@@ -58,9 +69,20 @@ io.on("connection", (socket) => {
     });
 
     //on disconnet
-    socket.on("disconnect", () => {
-        console.log("User disconnected:", socket.id);
+    socket.on("disconnect", async () => {
+        const room = socket.data.room;
+
+        if (!room) {
+            return;
+        }
+        const socketsInRoom = await io.in(room).fetchSockets();
+
+        const onlineUsers = socketsInRoom.map((client) => {
+            return client.data.username;
+        });
+        io.to(room).emit("online-users", onlineUsers);
     });
+    //-----------------------------------------------//
 });
 
 // Start the server
