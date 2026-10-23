@@ -13,15 +13,16 @@ const PORT = 3000;
 
 // Serve frontend files from the public folder
 app.use(express.static(path.join(__dirname, "public")));
-//---------------------------//
+//----------------------------------------------------------//
 
 
 // Handle Socket.IO connections
 io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
-//----------------------------------//
+//----------------------------------------------------------//
 
-//join room listener
+
+//Join Room Listener
     socket.on("join-room", async (data) => {
     const username = data.username.trim();
     const room = data.room;
@@ -31,6 +32,7 @@ io.on("connection", (socket) => {
     }
 
     socket.join(room);
+    socket.to(room).emit("system-message", `${username} joined the room`);
 
     //fetching the sockets of a room
     const socketsInRoom = await io.in(room).fetchSockets();
@@ -46,6 +48,32 @@ io.on("connection", (socket) => {
     console.log(`${username} joined room: ${room}`);
     });
 //-----------------------------------------------------------//
+
+
+//Message input event listener at server side
+socket.on("typing", () => {
+    const username = socket.data.username;
+    const room = socket.data.room;
+
+    if (!username || !room) {
+        return;
+    }
+    socket.to(room).emit("user-typing", username);
+});
+
+//Stop typing event listener
+socket.on("stop-typing", () => {
+    const username = socket.data.username;
+    const room = socket.data.room;
+
+    if (!username || !room) {
+        return;
+    }
+
+    socket.to(room).emit("user-stop-typing", username);
+});
+//------------------------------------------------------------------//
+//------------------------------------------------------------------//
 
 
 //on receiving of send-message
@@ -67,14 +95,17 @@ io.on("connection", (socket) => {
             message: cleanMessage
         });
     });
+//-----------------------------------------------//
 
-    //on disconnet
+//Disconneting the Socket
     socket.on("disconnect", async () => {
         const room = socket.data.room;
-
+        const username = socket.data.username;
         if (!room) {
             return;
         }
+        socket.to(room).emit("system-message", `${username} left the room`);
+        
         const socketsInRoom = await io.in(room).fetchSockets();
 
         const onlineUsers = socketsInRoom.map((client) => {
@@ -82,7 +113,7 @@ io.on("connection", (socket) => {
         });
         io.to(room).emit("online-users", onlineUsers);
     });
-    //-----------------------------------------------//
+//----------------------------------------------------------//
 });
 
 // Start the server

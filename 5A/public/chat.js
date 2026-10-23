@@ -12,6 +12,8 @@ const messages = document.getElementById("messages");
 
 const onlineUsersList = document.getElementById("online-users");
 
+const typingStatus = document.getElementById("typing-status");
+
 socket.on("connect", () => {
     status.textContent = "Connected to chat server!";
     console.log("Connected:", socket.id);
@@ -38,6 +40,23 @@ joinForm.addEventListener("submit", (event) => {
         room: room
     });
 });
+//---------------------------------------------------------//
+
+
+//Message input event listener
+let typingTimer;
+
+messageInput.addEventListener("input", () => {
+    socket.emit("typing");
+
+    clearTimeout(typingTimer);
+
+    typingTimer = setTimeout(() => {
+        socket.emit("stop-typing");
+    }, 1000);
+});
+//------------------------------------------------------//
+
 
 //message form event listener
 messageForm.addEventListener("submit", (event) => {
@@ -53,8 +72,10 @@ messageForm.addEventListener("submit", (event) => {
 
     messageInput.value = "";
 });
+//----------------------------------------------------//
 
-//on receiving new message emit from server
+
+//Receiving new message emit from server
 socket.on("new-message", (data) => {
     const item = document.createElement("li");
 
@@ -62,6 +83,8 @@ socket.on("new-message", (data) => {
 
     messages.appendChild(item);
 });
+//------------------------------------------------------//
+
 
 //on recieving online users list
 socket.on("online-users", (users) => {
@@ -73,3 +96,31 @@ socket.on("online-users", (users) => {
         onlineUsersList.appendChild(item);
     });
 });
+//-------------------------------------------------//
+
+
+//Display notifications of someone leaving the room
+socket.on("system-message", (message) => {
+    const item = document.createElement("li");
+
+    item.textContent = message;
+    item.classList.add("system-message");
+
+    messages.appendChild(item);
+});
+//------------------------------------------------//
+
+
+//User-Typing event listener
+socket.on("user-typing", (username) => {
+    typingStatus.textContent = `${username} is typing...`;
+});
+
+//User_not_typing event listener
+socket.on("user-stop-typing", (username) => {
+    if (typingStatus.textContent === `${username} is typing...`) {
+        typingStatus.textContent = "";
+    }
+});
+//----------------------------------------------------------------//
+//-----------------------------------------------------------------//
