@@ -175,12 +175,35 @@ privateMessageForm.addEventListener("submit", (event) => {
 
 //Displaying private message
 socket.on("private-message", (data) => {
+    const selectedRecipient = privateRecipient.value;
+    const currentUsername = usernameInput.value.trim();
+
+    if (!selectedRecipient || !data) {
+        return;
+    }
+
+    // Determine who this conversation is with
+    const conversationPartner =
+        data.sender === currentUsername
+            ? data.recipient
+            : data.sender;
+
+    // Ignore messages belonging to another conversation
+    if (conversationPartner !== selectedRecipient) {
+        return;
+    }
+
     const item = document.createElement("li");
 
-    item.textContent = `[Private] ${data.sender}: ${data.message}`;
+    const sender = data.sender === currentUsername
+        ? `You → ${data.recipient}`
+        : data.sender;
 
-    messages.appendChild(item);
+    item.textContent = `[Private] ${sender}: ${data.message}`;
+
+    privateMessages.appendChild(item);
 });
+
 
 socket.on("private-message-error", (message) => {
     alert(message);
@@ -191,12 +214,16 @@ socket.on("private-message-error", (message) => {
 privateRecipient.addEventListener("change", () => {
     const recipient = privateRecipient.value;
 
+    // Clear the previously displayed conversation
+    privateMessages.innerHTML = "";
+
     if (recipient === "") {
         return;
     }
 
     socket.emit("load-private-history", recipient);
 });
+
 //-----------//
 
 //---------------Private message history---------------------------------//

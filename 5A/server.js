@@ -24,8 +24,19 @@ io.on("connection", (socket) => {
 
 //--------------Join Room Listener----------------------//
 socket.on("join-room", async (data) => {
+    if (
+        !data ||
+        typeof data.username !== "string" ||
+        !data.username.trim() ||
+        !["general", "development"].includes(data.room)
+    ) {
+        return;
+    }
+
     const username = data.username.trim();
     const room = data.room;
+
+
     
     //50 messages displayed
     const getMessages = db.prepare(`
@@ -39,9 +50,26 @@ socket.on("join-room", async (data) => {
     socket.emit("message-history", history);
     // 
 
-    if (!username || !["general", "development"].includes(room)) {
-        return;
+    const previousRoom = socket.data.room;
+
+    if (previousRoom && previousRoom !== room) {
+        socket.leave(previousRoom);
+
+        socket.to(previousRoom).emit(
+            "system-message",
+            `${username} left the room`
+        );
+
+        const previousRoomSockets = await io.in(previousRoom).fetchSockets();
+        const previousRoomUsers = previousRoomSockets.map(
+            (client) => client.data.username
+        );
+
+        io.to(previousRoom).emit("online-users", previousRoomUsers);
     }
+
+    socket.data.username = username;
+    socket.data.room = room;
 
     socket.join(room);
     socket.to(room).emit("system-message", `${username} joined the room`);
@@ -53,9 +81,6 @@ socket.on("join-room", async (data) => {
     });
     io.to(room).emit("online-users", onlineUsers);
     //
-
-    socket.data.username = username;
-    socket.data.room = room;
 
     console.log(`${username} joined room: ${room}`);
 });
@@ -158,12 +183,14 @@ socket.on("private-message", (data) => {
     // Send the private message to the recipient
     recipientSocket.emit("private-message", {
         sender: sender,
+        recipient: recipient,
         message: message
     });
 
     // Also send a copy to the sender
     socket.emit("private-message", {
-        sender: `You → ${recipient}`,
+        sender: sender,
+        recipient: recipient,
         message: message
     });
 });
