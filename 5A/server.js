@@ -117,6 +117,99 @@ socket.on("stop-typing", () => {
     });
 //-----------------------------------------------//
 
+//-----------------------------Private message receiving----------------------------//
+socket.on("private-message", (data) => {
+    if (
+        !data ||
+        typeof data.recipient !== "string" ||
+        typeof data.message !== "string"
+    ) {
+        return;
+    }
+
+    const sender = socket.data.username;
+    const room = socket.data.room;
+    const recipient = data.recipient.trim();
+    const message = data.message.trim();
+
+    if (!sender || !room || !recipient || !message) {
+        return;
+    }
+
+    // Find the recipient's socket in the same room
+    const recipientSocket = [...io.sockets.sockets.values()].find(
+        (client) =>
+            client.data.username === recipient &&
+            client.data.room === room
+    );
+
+    if (!recipientSocket) {
+        socket.emit("private-message-error", "Recipient is not online in this room.");
+        return;
+    }
+    // Save private message in SQLite
+    const insertMessage = db.prepare(`
+        INSERT INTO messages (room, sender, recipient, message, type)
+        VALUES (?, ?, ?, ?, ?)
+    `);
+    insertMessage.run(room, sender, recipient, message, "private");
+    //-//
+
+    // Send the private message to the recipient
+    recipientSocket.emit("private-message", {
+        sender: sender,
+        message: message
+    });
+
+    // Also send a copy to the sender
+    socket.emit("private-message", {
+        sender: `You → ${recipient}`,
+        message: message
+    });
+});
+
+//---------------------Private messages history loading ----------------------//
+socket.on("load-private-history", (recipient) => {
+    const username = socket.data.username;
+    const room = socket.data.room;
+
+    if (
+        !username ||
+        !room ||
+        typeof recipient !== "string" ||
+        !recipient.trim() ||
+        recipient === username
+    ) {
+        return;
+    }
+
+    const getPrivateMessages = db.prepare(`
+        SELECT sender, recipient, message, created_at
+        FROM messages
+        WHERE room = ?
+          AND type = 'private'
+          AND (
+              (sender = ? AND recipient = ?)
+              OR
+              (sender = ? AND recipient = ?)
+          )
+        ORDER BY id ASC
+    `);
+
+    const history = getPrivateMessages.all(
+        room,
+        username,
+        recipient,
+        recipient,
+        username
+    );
+
+    socket.emit("private-message-history", history);
+});
+//---------------------------------------------------------------------//
+
+//--------------------------------------------------------------------------//
+
 //Disconneting the Socket
     socket.on("disconnect", async () => {
         const room = socket.data.room;

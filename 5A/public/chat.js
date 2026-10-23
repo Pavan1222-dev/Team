@@ -1,5 +1,5 @@
 const socket = io();
-
+const privateMessages = document.getElementById("private-messages");
 const status = document.getElementById("status");
 const joinForm = document.getElementById("join-form");
 const usernameInput = document.getElementById("username");
@@ -13,6 +13,10 @@ const messages = document.getElementById("messages");
 const onlineUsersList = document.getElementById("online-users");
 
 const typingStatus = document.getElementById("typing-status");
+
+const privateRecipient = document.getElementById("private-recipient");
+const privateMessageForm = document.getElementById("private-message-form");
+const privateMessageInput = document.getElementById("private-message-input");
 
 socket.on("connect", () => {
     status.textContent = "Connected to chat server!";
@@ -86,17 +90,27 @@ socket.on("new-message", (data) => {
 //------------------------------------------------------//
 
 
-//on recieving online users list
+//-------------------Online users list-------------------------------------//
 socket.on("online-users", (users) => {
     onlineUsersList.innerHTML = "";
 
+    const privateRecipient = document.getElementById("private-recipient");
+    privateRecipient.innerHTML = '<option value="">Select a user</option>';
+
     users.forEach((username) => {
+        // Update the online users list
         const item = document.createElement("li");
         item.textContent = username;
         onlineUsersList.appendChild(item);
+
+        // Add the user to the private-message dropdown
+        const option = document.createElement("option");
+        option.value = username;
+        option.textContent = username;
+        privateRecipient.appendChild(option);
     });
 });
-//-------------------------------------------------//
+//----------------------------------------------------------------------//
 
 
 //Display notifications of someone leaving the room
@@ -138,3 +152,67 @@ socket.on("message-history", (history) => {
     });
 });
 //-------------------------------------------------------------------//
+
+//Private message 
+privateMessageForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const recipient = privateRecipient.value;
+    const message = privateMessageInput.value.trim();
+
+    if (recipient === "" || message === "") {
+        return;
+    }
+
+    socket.emit("private-message", {
+        recipient: recipient,
+        message: message
+    });
+
+    privateMessageInput.value = "";
+});
+//--------------------------------------------------------------//
+
+//Displaying private message
+socket.on("private-message", (data) => {
+    const item = document.createElement("li");
+
+    item.textContent = `[Private] ${data.sender}: ${data.message}`;
+
+    messages.appendChild(item);
+});
+
+socket.on("private-message-error", (message) => {
+    alert(message);
+});
+//-----------------------------------------------------------------------//
+
+//Private message form listener//
+privateRecipient.addEventListener("change", () => {
+    const recipient = privateRecipient.value;
+
+    if (recipient === "") {
+        return;
+    }
+
+    socket.emit("load-private-history", recipient);
+});
+//-----------//
+
+//---------------Private message history---------------------------------//
+socket.on("private-message-history", (history) => {
+    privateMessages.innerHTML = "";
+
+    history.forEach((data) => {
+        const item = document.createElement("li");
+
+        const sender = data.sender === usernameInput.value.trim()
+            ? `You → ${data.recipient}`
+            : data.sender;
+
+        item.textContent = `[Private] ${sender}: ${data.message}`;
+
+        privateMessages.appendChild(item);
+    });
+});
+//------------------------------------------------//

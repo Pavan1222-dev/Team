@@ -1,42 +1,176 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Chat</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
 <body>
-    <h1>Team Chat Application</h1>
+    <div class="app-container">
 
-    <form id="join-form">
-        <label for="username">Display name:</label>
-        <input id="username" type="text" required>
+        <!-- Header -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-icon">✦</div>
+                <div>
+                    <h1>Team Chat</h1>
+                    <p class="subtitle">A space for your team to connect.</p>
+                </div>
+            </div>
 
-        <label for="room">Room:</label>
-        <select id="room">
-            <option value="general">General</option>
-            <option value="development">Development</option>
-        </select>
+            <span class="connection-badge" id="status">
+                Connecting...
+            </span>
+        </header>
 
-        <button type="submit">Join Room</button>
-    </form>
+        <!-- Join room -->
+        <section class="card join-card">
+            <div class="card-header">
+                <div>
+                    <h2>Join a conversation</h2>
+                    <p class="section-description">
+                        Choose your display name and room.
+                    </p>
+                </div>
+            </div>
 
-    <p id="status">Connecting...</p>
-    <p id="room-status">You haven't joined a room yet.</p>
-    
-    <form id="message-form">
-        <input
-            id="message-input"
-            type="text"
-            placeholder="Type a message..."
-            required
-        >
-        <button type="submit">Send</button>
-    </form>
-    <ul id="messages"></ul>
+            <div class="card-body">
+                <form id="join-form" class="join-form">
+                    <div class="field">
+                        <label for="username">Display name</label>
+                        <input
+                            id="username"
+                            type="text"
+                            placeholder="Your name"
+                            required
+                        >
+                    </div>
 
-    <p id="typing-status"></p>
+                    <div class="field">
+                        <label for="room">Chat room</label>
+                        <select id="room">
+                            <option value="general">General</option>
+                            <option value="development">Development</option>
+                        </select>
+                    </div>
 
+                    <button type="submit">Join Room</button>
+                </form>
 
+                <p class="room-status" id="room-status">
+                    You haven't joined a room yet.
+                </p>
+            </div>
+        </section>
 
-    <!-- online users display -->
-    <h3>Online Users</h3>
+        <!-- Main dashboard -->
+        <div class="dashboard">
 
-    <ul id="online-users"></ul>
+            <main class="main-column">
+
+                <!-- Public room chat -->
+                <section class="card chat-card">
+                    <div class="card-header">
+                        <div>
+                            <h2>Room conversation</h2>
+                            <p class="section-description">
+                                Messages shared with everyone in the room.
+                            </p>
+                        </div>
+
+                        <span class="room-label">Live chat</span>
+                    </div>
+
+                    <ul id="messages" class="message-list"></ul>
+
+                    <p id="typing-status"></p>
+
+                    <form id="message-form" class="message-composer">
+                        <input
+                            id="message-input"
+                            type="text"
+                            placeholder="Write a message..."
+                            autocomplete="off"
+                            required
+                        >
+                        <button type="submit">Send</button>
+                    </form>
+                </section>
+
+                <!-- Private chat -->
+                <section class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2>Private conversation</h2>
+                            <p class="section-description">
+                                Chat directly with a teammate.
+                            </p>
+                        </div>
+
+                        <span class="private-label">Private</span>
+                    </div>
+
+                    <div class="private-chat-body">
+                        <div class="field">
+                            <label for="private-recipient">
+                                Conversation with
+                            </label>
+                            <select id="private-recipient">
+                                <option value="">Select a user</option>
+                            </select>
+                        </div>
+
+                        <ul
+                            id="private-messages"
+                            class="private-message-list"
+                        ></ul>
+
+                        <form
+                            id="private-message-form"
+                            class="private-form"
+                        >
+                            <input
+                                type="text"
+                                id="private-message-input"
+                                placeholder="Write a private message..."
+                                autocomplete="off"
+                                required
+                            >
+                            <button type="submit">Send</button>
+                        </form>
+                    </div>
+                </section>
+
+            </main>
+
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <section class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2>People online</h2>
+                            <p class="section-description">
+                                Teammates in your room.
+                            </p>
+                        </div>
+
+                        <span class="online-indicator"></span>
+                    </div>
+
+                    <ul id="online-users" class="user-list"></ul>
+
+                    <div class="sidebar-footer">
+                        Online members in your current room
+                    </div>
+                </section>
+            </aside>
+
+        </div>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="/chat.js"></script>
 </body>
+</html>
