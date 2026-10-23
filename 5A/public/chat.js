@@ -18,36 +18,66 @@ const privateRecipient = document.getElementById("private-recipient");
 const privateMessageForm = document.getElementById("private-message-form");
 const privateMessageInput = document.getElementById("private-message-input");
 
+//-------------------Connect------------------------//
 socket.on("connect", () => {
     status.textContent = "Connected to chat server!";
     console.log("Connected:", socket.id);
+
+    // Restore the previously saved session
+    const savedUsername = localStorage.getItem("chatUsername");
+    const savedRoom = localStorage.getItem("chatRoom");
+
+    if (
+        savedUsername &&
+        ["general", "development"].includes(savedRoom)
+    ) {
+        usernameInput.value = savedUsername;
+        roomInput.value = savedRoom;
+
+        // Automatically rejoin the previous room
+        socket.emit("join-room", {
+            username: savedUsername,
+            room: savedRoom
+        });
+
+        roomStatus.textContent = `Joined ${savedRoom}`;
+    }
 });
+//----------------------------------------------------------//
 
 socket.on("disconnect", () => {
     status.textContent = "Disconnected from chat server.";
     console.log("Disconnected from server");
 });
 
-//join form event listener
+
+//------------Join form event listener---------------------//
 joinForm.addEventListener("submit", (event) => {
     event.preventDefault();
 
     const username = usernameInput.value.trim();
     const room = roomInput.value;
 
-    if (username === "") {
+    if (
+        username === "" ||
+        !["general", "development"].includes(room)
+    ) {
         return;
     }
 
-    socket.emit("join-room", {
-        username: username,
-        room: room
-    });
+    // Remember the user's details across refreshes
+    localStorage.setItem("chatUsername", username);
+    localStorage.setItem("chatRoom", room);
+
+    // Join the selected room
+    socket.emit("join-room", { username, room });
+
+    roomStatus.textContent = `Joined ${room}`;
 });
 //---------------------------------------------------------//
 
 
-//Message input event listener
+//-------Message input event listener-----------//
 let typingTimer;
 
 messageInput.addEventListener("input", () => {
