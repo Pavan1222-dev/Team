@@ -124,3 +124,17 @@ socket.on("user-stop-typing", (username) => {
 });
 //----------------------------------------------------------------//
 //-----------------------------------------------------------------//
+
+//Message history display
+socket.on("message-history", (history) => {
+    messages.innerHTML = "";
+
+    history.forEach((data) => {
+        const item = document.createElement("li");
+
+        item.textContent = `${data.sender}: ${data.message}`;
+
+        messages.appendChild(item);
+    });
+});
+//-------------------------------------------------------------------//

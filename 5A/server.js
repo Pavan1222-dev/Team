@@ -22,10 +22,22 @@ io.on("connection", (socket) => {
 //----------------------------------------------------------//
 
 
-//Join Room Listener
-    socket.on("join-room", async (data) => {
+//--------------Join Room Listener----------------------//
+socket.on("join-room", async (data) => {
     const username = data.username.trim();
     const room = data.room;
+    
+    //50 messages displayed
+    const getMessages = db.prepare(`
+    SELECT sender, message, created_at
+    FROM messages
+    WHERE room = ? AND type = 'room'
+    ORDER BY id DESC
+    LIMIT 50
+    `);
+    const history = getMessages.all(room).reverse();
+    socket.emit("message-history", history);
+    // 
 
     if (!username || !["general", "development"].includes(room)) {
         return;
@@ -40,13 +52,13 @@ io.on("connection", (socket) => {
         return client.data.username;
     });
     io.to(room).emit("online-users", onlineUsers);
-    //-//
+    //
 
     socket.data.username = username;
     socket.data.room = room;
 
     console.log(`${username} joined room: ${room}`);
-    });
+});
 //-----------------------------------------------------------//
 
 
@@ -76,7 +88,7 @@ socket.on("stop-typing", () => {
 //------------------------------------------------------------------//
 
 
-//on receiving of send-message
+//Send-message receiver
     socket.on("send-message", (message) => {
     if (typeof message !== "string") {
         return;
@@ -90,6 +102,14 @@ socket.on("stop-typing", () => {
         return;
     }
 
+    // Save message in SQLite
+    const insertMessage = db.prepare(`
+        INSERT INTO messages (room, sender, message, type)
+        VALUES (?, ?, ?, ?)
+    `);
+     insertMessage.run(room, username, cleanMessage, "room");
+
+    //Broadcast message to everyone
         io.to(room).emit("new-message", {
             username: username,
             message: cleanMessage
