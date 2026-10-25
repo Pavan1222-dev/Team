@@ -1,0 +1,133 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TeamChat | Team Messaging</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <!-- Login screen -->
+    <section id="loginScreen" class="login-screen">
+      <div class="login-card">
+        <div class="brand-icon">T</div>
+        <h1>Welcome to TeamChat</h1>
+        <p class="muted">Connect with your team in real time.</p>
+
+        <form id="joinForm">
+          <label for="username">Display name</label>
+          <input
+            id="username"
+            type="text"
+            maxlength="30"
+            placeholder="Enter your name"
+            autocomplete="nickname"
+            required
+          >
+
+          <label for="room">Room name</label>
+          <input
+            id="room"
+            type="text"
+            maxlength="40"
+            placeholder="e.g. developers"
+            required
+          >
+
+          <p class="hint">Enter an existing room name to join it,
+            or a new name to create a room.</p>
+
+          <button type="submit" class="primary-btn">
+            Join Chat
+          </button>
+          <p id="loginError" class="error" role="alert"></p>
+        </form>
+      </div>
+    </section>
+
+    <!-- Main chat screen -->
+    <section id="chatScreen" class="chat-screen hidden">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-icon small">T</div>
+          <div>
+            <h2>TeamChat</h2>
+            <span class="muted">Your team, connected</span>
+          </div>
+        </div>
+
+        <div class="header-user">
+          <span class="online-dot"></span>
+          <span id="currentUsername"></span>
+          <button id="leaveBtn" class="outline-btn" type="button">
+            Leave
+          </button>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <aside class="sidebar">
+          <h3>CHAT ROOM</h3>
+          <div class="room-card">
+            <span class="room-hash">#</span>
+            <span id="currentRoom"></span>
+          </div>
+
+          <h3 class="members-heading">
+            ONLINE MEMBERS
+            <span id="onlineCount" class="count">0</span>
+          </h3>
+
+          <div id="onlineUsers" class="online-users"></div>
+
+          <p class="sidebar-hint">
+            Select a member to send a private message.
+          </p>
+        </aside>
+
+        <section class="conversation">
+          <div class="conversation-header">
+            <div>
+              <h2 id="conversationTitle"># General</h2>
+              <p id="conversationSubtitle" class="muted">
+                Messages in this room
+              </p>
+            </div>
+            <button id="groupBtn" class="outline-btn hidden"
+              type="button">
+              Back to room
+            </button>
+          </div>
+
+          <div id="messages" class="messages"
+            aria-live="polite" aria-relevant="additions"></div>
+
+          <div id="typingIndicator" class="typing-indicator"
+            aria-live="polite"></div>
+
+          <form id="messageForm" class="message-form">
+            <textarea
+              id="messageInput"
+              rows="1"
+              maxlength="1000"
+              placeholder="Write a message..."
+              aria-label="Message"
+              required
+            ></textarea>
+            <button type="submit" class="send-btn"
+              aria-label="Send message">➤</button>
+          </form>
+          <p class="composer-hint">
+            Enter to send · Shift + Enter for a new line
+          </p>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>

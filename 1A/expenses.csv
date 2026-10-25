@@ -1,0 +1,6 @@
+id,date,amount,category,description,paymentMode
+"1","2026-10-17","350.00","food","Office lunch","upi"
+"2","2026-10-17","300.00","travel","Lunch","upi"
+"3","2026-10-18","1200.00","travel","Train ticket","card"
+"4","2026-10-17","400.00","travel","Lunch","upi"
+"6","2026-10-17","400.00","food","Dinner","upi"

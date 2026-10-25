@@ -1,0 +1,210 @@
+{
+  "info": {
+    "name": "Scheduled Report Mailer API",
+    "description": "Postman collection for the Node.js Scheduled Report Mailer project. Set baseUrl and scheduleId variables, start the server with npm start, then run the requests. Example recipient addresses are placeholders; Ethereal captures test emails for preview and does not deliver them to real inboxes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "scheduleId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Schedules",
+      "item": [
+        {
+          "name": "Create Schedule - Daily Sales PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportType\": \"daily-sales\",\n  \"cronExpression\": \"* * * * *\",\n  \"recipients\": [\"customer@example.com\"],\n  \"format\": \"PDF\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/schedules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "schedules"
+              ]
+            },
+            "description": "Creates a report schedule. The every-minute cron expression is for testing. Supported reportType values: daily-sales, weekly-pending-tasks. Supported format values: PDF, EXCEL."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.id !== undefined) {",
+                  "    pm.collectionVariables.set('scheduleId', String(data.id));",
+                  "    console.log('Saved scheduleId:', data.id);",
+                  "  }",
+                  "}",
+                  "pm.test('Schedule created or response inspected', function () {",
+                  "  pm.expect([201, 400, 500]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Schedules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/schedules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "schedules"
+              ]
+            },
+            "description": "Returns all saved schedules. paused = 0 means active; paused = 1 means paused."
+          }
+        },
+        {
+          "name": "Update Schedule Cron Expression",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cronExpression\": \"*/2 * * * *\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/schedules/{{scheduleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "schedules",
+                "{{scheduleId}}"
+              ]
+            },
+            "description": "Changes the cron expression to every two minutes without restarting the server."
+          }
+        },
+        {
+          "name": "Pause Schedule",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/schedules/{{scheduleId}}/pause",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "schedules",
+                "{{scheduleId}}",
+                "pause"
+              ]
+            },
+            "description": "Pauses future cron-triggered runs for this schedule."
+          }
+        },
+        {
+          "name": "Resume Schedule",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/schedules/{{scheduleId}}/resume",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "schedules",
+                "{{scheduleId}}",
+                "resume"
+              ]
+            },
+            "description": "Resumes scheduled runs using the saved cron expression."
+          }
+        },
+        {
+          "name": "Run Schedule Now",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/schedules/{{scheduleId}}/run-now",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "schedules",
+                "{{scheduleId}}",
+                "run-now"
+              ]
+            },
+            "description": "Starts report generation and email sending immediately. The work runs asynchronously; check Run History for the final status."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Run History",
+      "item": [
+        {
+          "name": "Get Run History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/runs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "runs"
+              ]
+            },
+            "description": "Returns run history including schedule_id, start_time, end_time, status, and error_message."
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "expenses": [
+    {
+      "id": 1,
+      "date": "2026-10-17",
+      "amount": 350,
+      "category": "food",
+      "description": "Office lunch",
+      "paymentMode": "upi"
+    },
+    {
+      "id": 2,
+      "date": "2026-10-17",
+      "amount": 300,
+      "category": "travel",
+      "description": "Lunch",
+      "paymentMode": "upi"
+    },
+    {
+      "id": 3,
+      "date": "2026-10-18",
+      "amount": 1200,
+      "category": "travel",
+      "description": "Train ticket",
+      "paymentMode": "card"
+    },
+    {
+      "id": 4,
+      "date": "2026-10-17",
+      "amount": 400,
+      "category": "travel",
+      "description": "Lunch",
+      "paymentMode": "upi"
+    },
+    {
+      "id": 6,
+      "date": "2026-10-17",
+      "amount": 400,
+      "category": "food",
+      "description": "Dinner",
+      "paymentMode": "upi"
+    },
+    {
+      "id": 7,
+      "date": "2026-10-17",
+      "amount": 250,
+      "category": "food",
+      "description": "Lunch",
+      "paymentMode": "upi"
+    },
+    {
+      "id": 8,
+      "date": "2026-10-17",
+      "amount": 250,
+      "category": "food",
+      "description": "Lunch",
+      "paymentMode": "upi"
+    },
+    {
+      "id": 9,
+      "date": "2026-10-17",
+      "amount": 150,
+      "category": "food",
+      "description": "Snacks",
+      "paymentMode": "cash"
+    }
+  ],
+  "budgets": {
+    "food": 3000,
+    "travel": 5000,
+    "shopping": 4000
+  }
+}

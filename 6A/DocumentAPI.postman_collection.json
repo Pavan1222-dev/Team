@@ -1,0 +1,69 @@
+
+{
+  "info": {
+    "name": "Document Upload Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Upload Documents",
+      "request": {
+        "method": "POST",
+        "url": "http://localhost:3000/documents",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "files",
+              "type": "file",
+              "src": ""
+            },
+            {
+              "key": "title",
+              "value": "Invoice",
+              "type": "text"
+            },
+            {
+              "key": "type",
+              "value": "invoice",
+              "type": "text"
+            },
+            {
+              "key": "tags",
+              "value": "invoice,october",
+              "type": "text"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "List Documents",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:3000/documents"
+      }
+    },
+    {
+      "name": "Download Document",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:3000/documents/1/download"
+      }
+    },
+    {
+      "name": "Soft Delete",
+      "request": {
+        "method": "DELETE",
+        "url": "http://localhost:3000/documents/1"
+      }
+    },
+    {
+      "name": "Restore Document",
+      "request": {
+        "method": "POST",
+        "url": "http://localhost:3000/documents/1/restore"
+      }
+    }
+  ]
+}
