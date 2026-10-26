@@ -1,0 +1,25 @@
+{
+  "name": "expense-tracker-cli",
+  "version": "1.0.0",
+  "description": "A command-line expense tracker backed by local JSON files",
+  "keywords": [
+    "expensetracker"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pavan1222-dev/Team.git"
+  },
+  "bin": {
+    "expense": "./index.js"
+  },
+  "license": "ISC",
+  "author": "pavan kumar palika",
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "commander": "^15.0.0"
+  }
+}
