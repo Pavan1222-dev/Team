@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Team Chat</title>
+  <style>
+    body { font-family: Arial, sans-serif; display: flex; gap: 20px; padding: 20px; }
+    #sidebar { width: 200px; border-right: 1px solid #ccc; padding-right: 10px; }
+    #chatbox { flex-grow: 1; display: none; }
+    #messages { height: 300px; border: 1px solid #ccc; overflow-y: auto; padding: 10px; margin-bottom: 10px; }
+    .msg { margin-bottom: 5px; }
+    .system { color: gray; font-style: italic; font-size: 12px; }
+    .private { color: purple; font-weight: bold; }
+    .typing { color: gray; font-size: 12px; height: 15px; }
+  </style>
+</head>
+<body>
+
+  
+  <div id="loginbox">
+    <h2>Join Chat</h2>
+    <input type="text" id="username" placeholder="Your Name"><br><br>
+    <input type="text" id="roomname" placeholder="Room Name (e.g. general)"><br><br>
+    <button onclick="joinRoom()">Join Room</button>
+  </div>
+
+ 
+  <div id="chatbox">
+    <div style="display: flex;">
+      <div id="sidebar">
+        <h3>Online Users</h3>
+        <ul id="userlist"></ul>
+      </div>
+      
+      <div style="flex-grow: 1; margin-left: 20px;">
+        <h3 id="roomTitle">Room</h3>
+        <div id="messages"></div>
+        <div class="typing" id="typingIndicator"></div>
+        
+        <input type="text" id="chatInput" placeholder="Type a message..." style="width: 70%;" oninput="sendTyping()">
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+
+ 
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let myId = null;
+    let typingTimer;
+
+    function joinRoom() {
+      let name = document.getElementById('username').value;
+      let room = document.getElementById('roomname').value;
+      
+      if (name && room) {
+        socket.emit('room:join', { name: name, room: room });
+        document.getElementById('loginbox').style.display = 'none';
+        document.getElementById('chatbox').style.display = 'block';
+        document.getElementById('roomTitle').innerText = "Room: " + room;
+      }
+    }
+
+    function sendMessage() {
+      let input = document.getElementById('chatInput');
+      if (input.value) {
+        socket.emit('message:send', input.value);
+        input.value = '';
+        socket.emit('typing:set', false);
+      }
+    }
+
+    function sendTyping() {
+      socket.emit('typing:set', true);
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => {
+        socket.emit('typing:set', false);
+      }, 2000);
+    }
+
+    function sendPrivateMessage(targetId, targetName) {
+      let text = prompt("Send private message to " + targetName + ":");
+      if (text) {
+        socket.emit('private:send', { targetId: targetId, text: text });
+      }
+    }
+
+
+    socket.on('room:history', function(messages) {
+      document.getElementById('messages').innerHTML = ""; // clear loading
+      for (let i = 0; i < messages.length; i++) {
+        appendMessage(`<b>${messages[i].senderName}</b> [${messages[i].time}]: ${messages[i].text}`, 'msg');
+      }
+    });
+
+    socket.on('message:new', function(msg) {
+      appendMessage(`<b>${msg.senderName}</b> [${msg.time}]: ${msg.text}`, 'msg');
+    });
+
+    socket.on('system:notice', function(text) {
+      appendMessage(text, 'system');
+    });
+
+    socket.on('private:new', function(msg) {
+      appendMessage(`[PRIVATE] <b>${msg.senderName}</b>: ${msg.text}`, 'private');
+    });
+
+    socket.on('typing:update', function(data) {
+      let div = document.getElementById('typingIndicator');
+      if (data.isTyping) {
+        div.innerText = data.name + " is typing...";
+      } else {
+        div.innerText = "";
+      }
+    });
+
+    socket.on('presence:update', function(users) {
+      let list = document.getElementById('userlist');
+      list.innerHTML = "";
+      
+      for (let i = 0; i < users.length; i++) {
+        let li = document.createElement('li');
+        li.innerText = users[i].name + " ";
+        
+ 
+        if (users[i].id !== socket.id) {
+          let btn = document.createElement('button');
+          btn.innerText = "DM";
+          btn.onclick = function() { sendPrivateMessage(users[i].id, users[i].name); };
+          li.appendChild(btn);
+        }
+        
+        list.appendChild(li);
+      }
+    });
+
+    function appendMessage(text, className) {
+      let div = document.getElementById('messages');
+      let newMsg = document.createElement('div');
+      newMsg.className = className;
+      newMsg.innerHTML = text;
+      div.appendChild(newMsg);
+      div.scrollTop = div.scrollHeight;
+    }
+  </script>
+</body>
+</html>

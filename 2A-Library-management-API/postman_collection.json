@@ -1,0 +1,65 @@
+{
+  "info": {
+    "name": "Library API (Project 2A)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Add Book (Success)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "http://localhost:3000/books", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["books"] },
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Learning Node\",\n  \"author\": \"John Doe\",\n  \"isbn\": \"1234567890\",\n  \"category\": \"Programming\",\n  \"total_copies\": 5\n}" }
+      }
+    },
+    {
+      "name": "2. Add Book (Failure - Duplicate ISBN 409)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "http://localhost:3000/books", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["books"] },
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Another Book\",\n  \"author\": \"Jane Doe\",\n  \"isbn\": \"1234567890\",\n  \"category\": \"Programming\",\n  \"total_copies\": 2\n}" }
+      }
+    },
+    {
+      "name": "3. Add Member (Failure - Zod Validation 400)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "http://localhost:3000/members", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["members"] },
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Alice\",\n  \"email\": \"not-an-email\"\n}" }
+      }
+    },
+    {
+      "name": "4. Get All Books (Pagination & Search)",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "http://localhost:3000/books?page=1&limit=5&search=Node", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["books"], "query": [ { "key": "page", "value": "1" }, { "key": "limit", "value": "5" }, { "key": "search", "value": "Node" } ] }
+      }
+    },
+    {
+      "name": "5. Issue Book",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "http://localhost:3000/loans/issue", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["loans", "issue"] },
+        "body": { "mode": "raw", "raw": "{\n  \"member_id\": 1,\n  \"book_id\": 1\n}" }
+      }
+    },
+    {
+      "name": "6. Return Book (Calculates Late Fee)",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "http://localhost:3000/loans/return/1", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["loans", "return", "1"] }
+      }
+    },
+    {
+      "name": "7. Get Overdue Loans",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "http://localhost:3000/loans/overdue", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["loans", "overdue"] }
+      }
+    }
+  ]
+}
