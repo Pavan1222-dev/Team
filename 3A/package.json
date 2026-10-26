@@ -1,0 +1,27 @@
+{
+  "name": "employee-leave-management",
+  "version": "1.0.0",
+  "description": "Basic employee management and leave API using PostgreSQL",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "migrate": "node database/runMigrations.js",
+    "seed": "node database/seed.js",
+    "db:reset": "npm run migrate && npm run seed"
+  },
+  "keywords": [
+    "node",
+    "postgres",
+    "employee",
+    "leave"
+  ],
+  "author": "Pavan",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg": "^8.23.1"
+  }
+}
