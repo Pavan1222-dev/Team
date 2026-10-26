@@ -12,7 +12,7 @@ async function readBody(request) {
   let body = '';
   for await (const chunk of request) {
     body += chunk;
-    if (body.length > 1024 * 1024) {
+    if (Buffer.byteLength(body, 'utf8') > 1024 * 1024) {
       throw new Error('Request body is too large');
     }
   }
@@ -25,6 +25,9 @@ function sendJson(response, status, data) {
 }
 
 function validateSchedule(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new Error('Request body must be a JSON object');
+  }
   if (!['daily_sales_summary', 'weekly_pending_tasks'].includes(body.reportType)) {
     throw new Error('reportType must be daily_sales_summary or weekly_pending_tasks');
   }
@@ -252,14 +255,19 @@ async function handleRequest(request, response) {
 
     sendJson(response, 404, { error: 'Route not found' });
   } catch (error) {
-    const status = error.message.includes('not found') ? 404 :
-      error instanceof SyntaxError || error.message.includes('must be') || error.message.includes('too large')
-        ? 400
-        : 500;
+    const status = error.message.includes('not found')
+      ? 404
+      : error.message.includes('too large')
+        ? 413
+        : error instanceof SyntaxError || error.message.includes('must be')
+          ? 400
+          : 500;
     if (status === 500) {
       console.error('Request failed:', error);
     }
-    sendJson(response, status, { error: error.message });
+    sendJson(response, status, {
+      error: status >= 500 ? 'An unexpected server error occurred.' : error.message
+    });
   }
 }
 
