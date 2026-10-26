@@ -1,0 +1,21 @@
+{
+  "name": "scheduled-report-mailer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A small API service for scheduled reports and email delivery",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.13",
+    "dotenv": "^18.0.9",
+    "exceljs": "^4.4.0",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^7.0.5",
+    "pdfkit": "^0.17.1",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
+  }
+}
