@@ -1,6 +1,7 @@
 const http = require('node:http');
 
-const PORT = Number(process.env.PORT) || 3001;
+const configuredPort = process.env.PORT;
+const PORT = configuredPort === undefined ? 3001 : Number(configuredPort);
 const CACHE_TTL = 10 * 60 * 1000;
 const cache = new Map();
 let countryCurrencies;
@@ -30,12 +31,12 @@ async function fetchJson(url, serviceName) {
       }
 
       const data = await response.json();
-      console.log(
+      console.info(
         `[external] ${serviceName} attempt ${attempt} completed in ${Date.now() - startedAt}ms (success)`,
       );
       return data;
     } catch (error) {
-      console.log(
+      console.warn(
         `[external] ${serviceName} attempt ${attempt} completed in ${Date.now() - startedAt}ms (failed)`,
       );
 
@@ -312,9 +313,18 @@ const server = http.createServer((request, response) => {
 });
 
 if (require.main === module) {
-  server.listen(PORT, () => {
-    console.log(`Weather and currency aggregator listening on port http://localhost:${PORT}`);
-  });
+  if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) {
+    console.error('[server] PORT must be an integer between 1 and 65535.');
+    process.exitCode = 1;
+  } else {
+    server.on('error', (error) => {
+      console.error(`[server] Could not listen on port ${PORT}: ${getErrorMessage(error)}`);
+      process.exitCode = 1;
+    });
+    server.listen(PORT, () => {
+      console.info(`Weather and currency aggregator listening on http://localhost:${PORT}`);
+    });
+  }
 }
 
 module.exports = { server };
