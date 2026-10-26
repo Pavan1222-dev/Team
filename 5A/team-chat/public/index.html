@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Chat</title>
+</head>
+<body>
+  <h1>Team Chat</h1>
+
+  <form id="join-form">
+    <label for="display-name">Display name</label>
+    <input id="display-name" maxlength="30" required>
+    <label for="room-name">Room name</label>
+    <input id="room-name" maxlength="30" required>
+    <button type="submit">Join room</button>
+  </form>
+
+  <p id="chat-error" role="alert"></p>
+
+  <section id="chat-screen" hidden>
+    <h2 id="room-heading"></h2>
+    <button id="leave-room" type="button">Leave room</button>
+
+    <h3>Online in this room</h3>
+    <ul id="room-users"></ul>
+
+    <h3>Messages</h3>
+    <ul id="messages" aria-live="polite"></ul>
+    <p id="typing-indicator"></p>
+
+    <form id="message-form">
+      <label for="message-text">Message</label>
+      <input id="message-text" maxlength="1000" autocomplete="off" required>
+      <button type="submit">Send</button>
+    </form>
+
+    <h3>Private message</h3>
+    <form id="private-form">
+      <label for="private-recipient">Online user</label>
+      <select id="private-recipient" required>
+        <option value="">Choose a user</option>
+      </select>
+      <label for="private-text">Private message</label>
+      <input id="private-text" maxlength="1000" required>
+      <button type="submit">Send privately</button>
+    </form>
+  </section>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
