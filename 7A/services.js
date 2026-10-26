@@ -89,10 +89,7 @@ async function recordClick(shortCode, referrer, userAgent) {
 
 async function getStatistics(shortCode) {
   if (!CODE_PATTERN.test(shortCode)) return null;
-  const url = await getDatabase().get(
-    'SELECT short_code, original_url, created_at, expires_at FROM urls WHERE short_code = ?',
-    [shortCode]
-  );
+  const url = await findShortUrl(shortCode);
   if (!url) return null;
   const result = await getDatabase().get(
     'SELECT COUNT(*) AS clicks FROM clicks WHERE short_code = ?',

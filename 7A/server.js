@@ -1,7 +1,8 @@
 import { server } from './controller.js';
 import { initializeDatabase } from './db.js';
 
-const port = Number(process.env.PORT) || 3000;
+const configuredPort = process.env.PORT;
+const port = configuredPort === undefined ? 3000 : Number(configuredPort);
 
 async function startServer() {
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
@@ -9,6 +10,10 @@ async function startServer() {
   }
 
   await initializeDatabase();
+  server.on('error', (error) => {
+    console.error(`URL shortener could not listen on port ${port}:`, error);
+    process.exitCode = 1;
+  });
   server.listen(port, () => {
     console.info(`URL shortener listening on http://localhost:${port}`);
   });
