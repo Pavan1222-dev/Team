@@ -77,3 +77,11 @@ These APIs do not require API keys. The server caches endpoint responses in memo
 ```
 
 The forecast contains three entries in an actual response. Weather values and sample dates above are illustrative.
+
+## Error handling
+
+City names and comparison lists are validated and bounded before upstream
+requests. Upstream failures are retried and logged as warnings; the API returns
+partial results with a warning rather than failing the whole request. An invalid
+`PORT` value or a port binding error is reported on stderr and prevents the
+server from starting.
