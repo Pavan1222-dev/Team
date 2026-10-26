@@ -1,0 +1,9 @@
+{
+  "name": "weather-currency-aggregator",
+  "version": "1.0.0",
+  "description": "A basic city weather, local time, and currency aggregator",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
