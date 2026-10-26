@@ -57,7 +57,8 @@ When an added expense makes its category's total for that calendar month exceed 
 
 - `data/expenses.json` contains expense records.
 - `data/budgets.json` contains category-to-monthly-amount settings.
-- `data/expenses.json` in the repository is sample data; the tracker also initializes correctly if either runtime data file is missing.
+- Both files are local runtime data and are excluded from Git. The tracker
+  initializes correctly if either file is missing.
 
 Invalid or corrupted JSON is reported with a non-zero exit code; the application does not silently replace corrupted data. Expense records have `id`, `date`, `amount`, `category`, `description`, and `paymentMode` properties.
 
