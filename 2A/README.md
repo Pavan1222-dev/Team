@@ -45,11 +45,7 @@ All URLs start with `http://localhost:3000`.
 
 ## Try it yourself
 
-Use Postman and import `postman/Library Management API.postman_collection.json`.
-The collection includes each endpoint and example error requests. Replace example
-IDs with IDs returned by your own create requests.
-
-You can also test from PowerShell after starting the server:
+You can make requests from PowerShell after starting the server:
 
 ```powershell
 $book = @{
