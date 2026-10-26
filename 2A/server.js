@@ -8,6 +8,8 @@ import { errorHandler, notFoundHandler } from "./middlewares/errorHandler.js";
 
 // Create the Express application and allow JSON request bodies.
 const app = express();
+const configuredPort = process.env.PORT;
+const port = configuredPort === undefined ? 3000 : Number(configuredPort);
 app.use(express.json());
 
 // Send each group of URLs to its own router.
@@ -20,12 +22,22 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // Create the database tables before accepting requests.
-initializeDatabase()
-  .then(() => {
-    app.listen(3000, () => {
-      console.log("Library API is running at http://localhost:3000");
+if (!Number.isInteger(port) || port < 1 || port > 65535) {
+  console.error("PORT must be an integer between 1 and 65535.");
+  process.exitCode = 1;
+} else {
+  initializeDatabase()
+    .then(() => {
+      const server = app.listen(port, () => {
+        console.log(`Library API is running at http://localhost:${port}`);
+      });
+      server.on("error", (error) => {
+        console.error("Could not start the server:", error.message);
+        process.exitCode = 1;
+      });
+    })
+    .catch((error) => {
+      console.error("Could not start the server:", error.message);
+      process.exitCode = 1;
     });
-  })
-  .catch((error) => {
-    console.error("Could not start the server:", error.message);
-  });
+}

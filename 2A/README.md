@@ -10,8 +10,9 @@ A small Express API for books, members, and loans.
 4. The API runs at `http://localhost:3000`.
 
 The SQLite database is created automatically at `data/library.sqlite`.
-No environment variables or credentials are required. The generated database is
-local runtime data and is not tracked.
+No credentials are required. Set the optional `PORT` environment variable to
+change the listening port from `3000`; it must be between 1 and 65535. No `.env`
+file is required. The generated database is local runtime data and is not tracked.
 
 ## Project folders
 
